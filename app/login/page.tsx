@@ -97,10 +97,6 @@ export default function LoginPage() {
                     </div>
                 </div>
 
-                <p className="text-center text-xs text-zinc-600 mt-8">
-                    The default password is <code className="text-zinc-400 px-1 py-0.5 bg-white/5 rounded">admin</code><br />
-                    You can change this globally in <code className="text-zinc-400">docker-compose.yml</code> using DASHBOARD_PASSWORD.
-                </p>
 
             </div>
         </div>
