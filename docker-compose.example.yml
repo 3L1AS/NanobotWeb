@@ -14,3 +14,4 @@ services:
     environment:
       - PORT=3000
       - DASHBOARD_PASSWORD=admin # Change this in production
+      - GATEWAY_URL=http://127.0.0.1:18790 # Change if nanobot is on another machine

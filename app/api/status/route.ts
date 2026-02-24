@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
     try {
-        // Ping the nanobot gateway on its default port 18790
-        const res = await fetch('http://localhost:18790/', {
+        // Ping the nanobot gateway
+        const gatewayUrl = process.env.GATEWAY_URL || 'http://127.0.0.1:18790';
+        const res = await fetch(gatewayUrl, {
             method: 'GET',
             signal: AbortSignal.timeout(2000)
         });

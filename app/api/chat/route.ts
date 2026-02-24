@@ -6,7 +6,8 @@ export async function POST(req: Request) {
 
         // The host gateway is usually running on 18790
         // We proxy it here to avoid CORS issues from the frontend
-        const gatewayRes = await fetch('http://localhost:18790/', {
+        const gatewayUrl = process.env.GATEWAY_URL || 'http://127.0.0.1:18790';
+        const gatewayRes = await fetch(gatewayUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message, id: sessionId })
