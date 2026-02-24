@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import http from 'http';
 
 export async function GET() {
-    const gatewayUrl = process.env.GATEWAY_URL || 'http://127.0.0.1:18790';
+    const gatewayUrl = process.env.GATEWAY_URL || 'http://host.docker.internal:18790';
 
     return new Promise((resolve) => {
         try {

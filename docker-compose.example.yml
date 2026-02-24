@@ -12,7 +12,9 @@ services:
       # Next API routes look for os.homedir() + .nanobot which is /root/.nanobot in our alpine image
       - ~/.nanobot:/root/.nanobot
     network_mode: "host"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     environment:
       - PORT=3000
       - DASHBOARD_PASSWORD=admin # Change this in production
-      - GATEWAY_URL=http://127.0.0.1:18790 # Change if nanobot is on another machine
+      - GATEWAY_URL=http://host.docker.internal:18790 # Maps back to the host machine

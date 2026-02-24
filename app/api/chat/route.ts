@@ -4,7 +4,7 @@ import http from 'http';
 export async function POST(req: Request) {
     try {
         const { message, sessionId = 'default' } = await req.json();
-        const gatewayUrl = process.env.GATEWAY_URL || 'http://127.0.0.1:18790';
+        const gatewayUrl = process.env.GATEWAY_URL || 'http://host.docker.internal:18790';
         const url = new URL(gatewayUrl);
 
         const payload = JSON.stringify({ message, id: sessionId });
