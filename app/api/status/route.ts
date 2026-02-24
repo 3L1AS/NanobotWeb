@@ -13,6 +13,7 @@ export async function GET() {
                     port: url.port,
                     path: '/',
                     method: 'GET',
+                    headers: { 'Connection': 'close' },
                     timeout: 2000,
                 },
                 (res) => {

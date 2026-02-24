@@ -18,7 +18,8 @@ export async function POST(req: Request) {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Content-Length': Buffer.byteLength(payload)
+                        'Content-Length': Buffer.byteLength(payload),
+                        'Connection': 'close'
                     },
                     timeout: 30000, // 30s timeout for chat generation
                 },
