@@ -4,6 +4,7 @@ services:
   # The sleek local dashboard
   # Connects to the host network so it can ping the already-running nanobot-gateway at localhost:18790
   nanobot-dashboard:
+    container_name: nanobot-dashboard
     build:
       context: .
       dockerfile: Dockerfile
