@@ -22,11 +22,15 @@ Because this dashboard is decoupled from the main gateway, running it is incredi
    git clone https://github.com/3L1AS/NanobotWeb.git
    cd NanobotWeb
    ```
-3. Run the dashboard container:
+3. Copy the example configuration:
+   ```bash
+   cp docker-compose.example.yml docker-compose.yml
+   ```
+4. Run the dashboard container:
    ```bash
    docker compose up --build -d
    ```
-4. Visit `http://localhost:3000` in your web browser. 
+5. Visit `http://localhost:3000` in your web browser. 
 5. Enter the default master password: `admin`
 
 *(You can change the default password by editing the `DASHBOARD_PASSWORD` variable in your `docker-compose.yml` file prior to building).*
