@@ -24,6 +24,7 @@ COPY --from=builder /app/.next/static ./.next/static
 
 # We need the user to map their home dir to ~ inside the container so the app can read ~/.nanobot
 ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 EXPOSE 3000
 
 CMD ["node", "server.js"]
