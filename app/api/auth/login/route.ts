@@ -18,7 +18,7 @@ export async function POST(req: Request) {
                 value: token,
                 httpOnly: true,
                 path: '/',
-                secure: process.env.NODE_ENV === 'production',
+                secure: req.url.startsWith('https://') || req.headers.get('x-forwarded-proto') === 'https',
                 sameSite: 'lax',
                 maxAge: 60 * 60 * 24 * 7, // 1 week
             });
