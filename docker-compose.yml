@@ -1,0 +1,15 @@
+version: "3.8"
+
+services:
+  # The sleek local dashboard
+  # Connects to the host network so it can ping the already-running nanobot-gateway at localhost:18790
+  nanobot-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      # Next API routes look for os.homedir() + .nanobot which is /root/.nanobot in our alpine image
+      - ~/.nanobot:/root/.nanobot
+    network_mode: "host"
+    environment:
+      - PORT=3000
