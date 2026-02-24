@@ -13,3 +13,4 @@ services:
     network_mode: "host"
     environment:
       - PORT=3000
+      - DASHBOARD_PASSWORD=admin # Change this in production

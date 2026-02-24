@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
     Activity, Settings, FolderOpen, Save, RefreshCw,
-    Bot, Server, CornerDownLeft, Send,
+    Bot, Server, CornerDownLeft, Send, LogOut,
     FileText, Folder, Plus, Trash2, Cpu, CheckCircle2, MessageSquare, PlusCircle, XCircle
 } from 'lucide-react';
 
@@ -11,6 +12,7 @@ type FsItem = { name: string; type: 'file' | 'directory'; path: string };
 type Config = any;
 
 export default function Dashboard() {
+    const router = useRouter();
     const [activeTab, setActiveTab] = useState<'status' | 'explorer' | 'settings' | 'chat'>('status');
 
     const [daemonStatus, setDaemonStatus] = useState<'online' | 'offline' | 'loading'>('loading');
@@ -40,6 +42,7 @@ export default function Dashboard() {
     const fetchStatus = async () => {
         try {
             const res = await fetch('/api/status');
+            if (res.status === 401) { router.push('/login'); return; }
             const data = await res.json();
             setDaemonStatus(data.status);
         } catch (e) {
@@ -50,6 +53,7 @@ export default function Dashboard() {
     const fetchConfig = async () => {
         try {
             const res = await fetch('/api/config');
+            if (res.status === 401) return;
             const data = await res.json();
             setConfig(data);
         } catch (e) {
@@ -60,6 +64,7 @@ export default function Dashboard() {
     const fetchFiles = async (dirPath: string = '') => {
         try {
             const res = await fetch(`/api/fs?path=${encodeURIComponent(dirPath)}`);
+            if (res.status === 401) return;
             const data = await res.json();
             setFiles(data.items || []);
             setCurrentPath(dirPath);
@@ -71,6 +76,7 @@ export default function Dashboard() {
     const openFile = async (filePath: string) => {
         try {
             const res = await fetch(`/api/workspace?file=${encodeURIComponent(filePath)}`);
+            if (res.status === 401) return;
             const data = await res.json();
             setFileContent(data.content || '');
             setActiveFile(filePath);
@@ -165,6 +171,15 @@ export default function Dashboard() {
         }
     };
 
+    const handleLogout = async () => {
+        try {
+            await fetch('/api/auth/logout', { method: 'POST' });
+            router.push('/login');
+        } catch (err) {
+            console.error('Logout failed', err);
+        }
+    };
+
     const SidebarItem = ({ icon: Icon, label, id }: any) => (
         <button
             onClick={() => setActiveTab(id)}
@@ -210,6 +225,9 @@ export default function Dashboard() {
                 <div className="mt-auto p-4 border-t border-white/10 text-xs text-zinc-500 flex flex-col gap-1">
                     <p>Target Volume: <code className="text-pink-400/80">~/.nanobot</code></p>
                     <p>Local Gateway: <code className="text-blue-400/80">18790</code></p>
+                    <button onClick={handleLogout} className="mt-4 flex items-center justify-center gap-2 w-full py-2 rounded border border-white/10 bg-white/5 hover:bg-white/10 transition text-zinc-300 hover:text-white">
+                        <LogOut className="w-4 h-4" /> Disconnect
+                    </button>
                 </div>
             </aside>
 
