@@ -36,6 +36,7 @@ export function createSession(): string {
         lastActive: now
     });
 
+    console.log(`[Session] Created new session, total sessions: ${sessionStore.size}`);
     return token;
 }
 
@@ -46,11 +47,13 @@ export function createSession(): string {
  */
 export function validateSession(token: string): boolean {
     if (!token || typeof token !== 'string') {
+        console.log(`[Session] Validation failed - invalid token type`);
         return false;
     }
 
     const session = sessionStore.get(token);
     if (!session) {
+        console.log(`[Session] Validation failed - token not found in store (total sessions: ${sessionStore.size})`);
         return false;
     }
 
@@ -59,6 +62,7 @@ export function validateSession(token: string): boolean {
 
     // Check if session has expired
     if (age > SESSION_MAX_AGE) {
+        console.log(`[Session] Validation failed - session expired (age: ${age}ms)`);
         sessionStore.delete(token);
         return false;
     }
