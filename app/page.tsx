@@ -184,8 +184,8 @@ export default function Dashboard() {
         <button
             onClick={() => setActiveTab(id)}
             className={`flex items-center gap-3 w-full p-3 rounded-lg transition-all duration-200 ${activeTab === id
-                    ? 'bg-white/10 text-white font-medium shadow-sm border border-white/5'
-                    : 'text-zinc-400 hover:text-white hover:bg-white/5'
+                ? 'bg-white/10 text-white font-medium shadow-sm border border-white/5'
+                : 'text-zinc-400 hover:text-white hover:bg-white/5'
                 }`}
         >
             <Icon className="w-5 h-5" />
@@ -224,7 +224,7 @@ export default function Dashboard() {
 
                 <div className="mt-auto p-4 border-t border-white/10 text-xs text-zinc-500 flex flex-col gap-1">
                     <p>Target Volume: <code className="text-pink-400/80">~/.nanobot</code></p>
-                    <p>Local Gateway: <code className="text-blue-400/80">18790</code></p>
+                    <p>Docker Service: <code className="text-blue-400/80">nanobot-gateway</code></p>
                     <button onClick={handleLogout} className="mt-4 flex items-center justify-center gap-2 w-full py-2 rounded border border-white/10 bg-white/5 hover:bg-white/10 transition text-zinc-300 hover:text-white">
                         <LogOut className="w-4 h-4" /> Disconnect
                     </button>
@@ -265,7 +265,7 @@ export default function Dashboard() {
                                         <p className="text-2xl font-bold capitalize">
                                             {daemonStatus}
                                         </p>
-                                        <p className="text-sm text-zinc-500">Checking localhost port 18790</p>
+                                        <p className="text-sm text-zinc-500">Inspecting Docker Container `nanobot-gateway`</p>
                                     </div>
                                 </div>
                             </div>
