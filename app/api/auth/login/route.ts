@@ -47,7 +47,7 @@ export async function POST(req: Request) {
                 httpOnly: true,
                 path: '/',
                 secure: req.url.startsWith('https://') || req.headers.get('x-forwarded-proto') === 'https',
-                sameSite: 'strict', // Changed to strict for better CSRF protection
+                sameSite: 'lax', // 'lax' works with HTTP and reverse proxies, still provides good CSRF protection
                 maxAge: 60 * 60 * 24 * 7, // 1 week
             });
 
