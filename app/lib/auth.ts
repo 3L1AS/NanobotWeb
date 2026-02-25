@@ -10,7 +10,14 @@ interface Session {
     lastActive: number;
 }
 
-const sessionStore = new Map<string, Session>();
+// Use globalThis to ensure the same Map instance is shared across all Next.js modules
+// This prevents module isolation issues between middleware and API routes
+const globalForSession = globalThis as unknown as {
+    sessionStore: Map<string, Session> | undefined;
+};
+
+const sessionStore = globalForSession.sessionStore ?? new Map<string, Session>();
+globalForSession.sessionStore = sessionStore;
 
 // Session expiry: 7 days of inactivity
 const SESSION_MAX_AGE = 7 * 24 * 60 * 60 * 1000;
