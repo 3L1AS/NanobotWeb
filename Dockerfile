@@ -11,12 +11,16 @@ FROM base AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Create a dedicated user and group for the application
-RUN addgroup --system --gid 1001 nodejs && \
-    adduser --system --uid 1001 nextjs
-
 # Install docker CLI for container operations (minimal footprint)
 RUN apk add --no-cache docker-cli
+
+# Create a dedicated user and group for the application
+# Also create docker group with a common GID (can be overridden via build arg)
+ARG DOCKER_GID=999
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs && \
+    addgroup -g ${DOCKER_GID} docker 2>/dev/null || true && \
+    adduser nextjs docker
 
 # Copy built application with proper ownership
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
@@ -24,8 +28,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 # Switch to non-root user
-# NOTE: The docker socket and .nanobot directory must be accessible to this user
-# Add nextjs user to docker group (GID typically 999 on host, may need adjustment)
+# The nextjs user is now part of the docker group and can access the socket
 USER nextjs
 
 ENV PORT=3000

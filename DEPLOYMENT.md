@@ -27,16 +27,26 @@
    # Edit docker-compose.yml and set DASHBOARD_PASSWORD
    ```
 
-4. **Ensure correct permissions** (if using non-root user):
+4. **Check Docker socket GID** (optional but recommended):
    ```bash
-   # The nextjs user (UID 1001) needs access to .nanobot and docker socket
-   sudo chown -R 1001:1001 ~/.nanobot
-   # Add your user to docker group
-   sudo usermod -aG docker $(whoami)
-   newgrp docker
+   # Find your docker socket GID
+   stat -c '%g' /var/run/docker.sock
+   # Common values: 999, 998, or 997
+
+   # If it's not 999, set the environment variable
+   export DOCKER_GID=998  # Use your actual GID
    ```
 
-5. **Build and run**:
+5. **Ensure correct permissions**:
+   ```bash
+   # The nextjs user (UID 1001) needs access to .nanobot directory
+   sudo chown -R 1001:1001 ~/.nanobot
+
+   # Docker socket access is handled automatically via docker group
+   # No need to manually add users to docker group on host
+   ```
+
+6. **Build and run**:
    ```bash
    docker-compose up --build -d
    ```

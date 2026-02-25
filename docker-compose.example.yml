@@ -5,6 +5,10 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        # Override this if your docker socket has a different GID
+        # Find it with: stat -c '%g' /var/run/docker.sock
+        DOCKER_GID: ${DOCKER_GID:-999}
     volumes:
       # Mount .nanobot directory (runs as nextjs user, ensure permissions allow access)
       - ~/.nanobot:/home/nextjs/.nanobot
