@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { validateSession } from './app/lib/auth';
 
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
@@ -12,10 +13,8 @@ export function middleware(request: NextRequest) {
     // Check for the authentication token
     const token = request.cookies.get('nanobot-auth-token')?.value;
 
-    // Simple validation: the token must exist and match our expected structure
-    // In a full production app you'd use a real JWT, but a secure unguessable random string 
-    // generated at login is sufficient for a single-user local dashboard.
-    if (!token) {
+    // Validate the token server-side
+    if (!token || !validateSession(token)) {
         // If it's an API route, send 401
         if (pathname.startsWith('/api/')) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -24,7 +23,31 @@ export function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/login', request.url));
     }
 
-    return NextResponse.next();
+    // Add security headers to all responses
+    const response = NextResponse.next();
+
+    // Security headers
+    response.headers.set('X-Frame-Options', 'DENY');
+    response.headers.set('X-Content-Type-Options', 'nosniff');
+    response.headers.set('X-XSS-Protection', '1; mode=block');
+    response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+    response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+
+    // Content Security Policy
+    const cspDirectives = [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // Next.js requires unsafe-inline and unsafe-eval
+        "style-src 'self' 'unsafe-inline'", // Tailwind requires unsafe-inline
+        "img-src 'self' data: blob:",
+        "font-src 'self' data:",
+        "connect-src 'self'",
+        "frame-ancestors 'none'",
+        "base-uri 'self'",
+        "form-action 'self'"
+    ];
+    response.headers.set('Content-Security-Policy', cspDirectives.join('; '));
+
+    return response;
 }
 
 export const config = {

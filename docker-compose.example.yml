@@ -6,14 +6,43 @@ services:
       context: .
       dockerfile: Dockerfile
     volumes:
-      # Next API routes look for os.homedir() + .nanobot which is /root/.nanobot in our alpine image
-      - ~/.nanobot:/root/.nanobot
-      # Essential: Mount the host's Docker socket so NanoboardWeb can run `docker logs` and `docker restart`
-      - /var/run/docker.sock:/var/run/docker.sock
+      # Mount .nanobot directory (runs as nextjs user, ensure permissions allow access)
+      - ~/.nanobot:/home/nextjs/.nanobot
+      # Essential: Mount the host's Docker socket for container communication
+      # Security: Read-only mount, consider using docker socket proxy in production
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
       - "3000:3000"
     environment:
       - PORT=3000
-      - DASHBOARD_PASSWORD=admin # Change this in production
+      # SECURITY WARNING: Change this password! Use a strong, unique password
+      - DASHBOARD_PASSWORD=${DASHBOARD_PASSWORD:-admin}
       - NANOBOT_CONTAINER_NAME=nanobot-gateway
-      - NANOBOT_DIR=/root/.nanobot
+      - NANOBOT_DIR=/home/nextjs/.nanobot
+      - NODE_ENV=production
+    # Security options
+    security_opt:
+      - no-new-privileges:true
+    # Read-only root filesystem for better security
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /app/.next/cache
+    # Resource limits to prevent DoS
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+    # Restart policy
+    restart: unless-stopped
+    # Health check
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/status', (r) => { process.exit(r.statusCode === 200 ? 0 : 1); });"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
