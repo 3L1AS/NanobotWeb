@@ -10,10 +10,11 @@ services:
         # Find it with: stat -c '%g' /var/run/docker.sock
         DOCKER_GID: ${DOCKER_GID:-999}
     volumes:
-      # Mount .nanobot directory (runs as nextjs user, ensure permissions allow access)
+      # Mount .nanobot directory to container home directory
+      # The container user 'nextjs' has home directory at /home/nextjs
       - ~/.nanobot:/home/nextjs/.nanobot
       # Essential: Mount the host's Docker socket for container communication
-      # Security: Read-only mount, consider using docker socket proxy in production
+      # IMPORTANT: Socket must be readable by docker group (usually GID 988-999)
       - /var/run/docker.sock:/var/run/docker.sock:ro
     ports:
       - "3000:3000"
@@ -22,7 +23,8 @@ services:
       # SECURITY WARNING: Change this password! Use a strong, unique password
       - DASHBOARD_PASSWORD=${DASHBOARD_PASSWORD:-admin}
       - NANOBOT_CONTAINER_NAME=nanobot-gateway
-      - NANOBOT_DIR=/home/nextjs/.nanobot
+      # Not needed - automatically uses os.homedir() + .nanobot
+      # - NANOBOT_DIR=/home/nextjs/.nanobot
       - NODE_ENV=production
     # Security options
     security_opt:
