@@ -40,18 +40,21 @@ export async function POST(req: Request) {
             // Clear rate limit on successful login
             clearRateLimit(ip);
 
+            const isSecure = req.url.startsWith('https://') || req.headers.get('x-forwarded-proto') === 'https';
+
             // Set HttpOnly cookie with security flags
             response.cookies.set({
                 name: 'nanobot-auth-token',
                 value: token,
                 httpOnly: true,
                 path: '/',
-                secure: req.url.startsWith('https://') || req.headers.get('x-forwarded-proto') === 'https',
+                secure: isSecure,
                 sameSite: 'lax', // 'lax' works with HTTP and reverse proxies, still provides good CSRF protection
                 maxAge: 60 * 60 * 24 * 7, // 1 week
             });
 
             console.log(`[Auth] Successful login from IP: ${ip}`);
+            console.log(`[Auth] Cookie set - Token: ${token.substring(0, 16)}..., Secure: ${isSecure}, SameSite: lax`);
             return response;
         }
 

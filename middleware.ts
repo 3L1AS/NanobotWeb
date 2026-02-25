@@ -13,8 +13,19 @@ export function middleware(request: NextRequest) {
     // Check for the authentication token
     const token = request.cookies.get('nanobot-auth-token')?.value;
 
+    // Debug logging
+    if (!token) {
+        console.log(`[Middleware] No token found for ${pathname}, redirecting to login`);
+    }
+
     // Validate the token server-side
     if (!token || !validateSession(token)) {
+        if (!token) {
+            console.log(`[Middleware] Missing token for ${pathname}`);
+        } else {
+            console.log(`[Middleware] Invalid/expired token for ${pathname}`);
+        }
+
         // If it's an API route, send 401
         if (pathname.startsWith('/api/')) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -22,6 +33,8 @@ export function middleware(request: NextRequest) {
         // Otherwise redirect to login
         return NextResponse.redirect(new URL('/login', request.url));
     }
+
+    console.log(`[Middleware] Valid session for ${pathname}`);
 
     // Add security headers to all responses
     const response = NextResponse.next();
