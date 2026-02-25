@@ -11,6 +11,8 @@ services:
       - ~/.nanobot:/root/.nanobot
       # Essential: Mount the host's Docker socket so NanoboardWeb can run `docker logs` and `docker restart`
       - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "3000:3000"
     environment:
       - PORT=3000
       - DASHBOARD_PASSWORD=admin # Change this in production
