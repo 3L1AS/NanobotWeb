@@ -108,3 +108,26 @@ setInterval(() => {
 export function getSessionCount(): number {
     return sessionStore.size;
 }
+
+/**
+ * Validates session from request cookies (for API routes)
+ * @param request - The request object
+ * @returns true if valid session exists, false otherwise
+ */
+export function validateRequestSession(request: Request): boolean {
+    const cookieHeader = request.headers.get('cookie');
+    if (!cookieHeader) {
+        return false;
+    }
+
+    // Parse cookie header to find our auth token
+    const cookies = cookieHeader.split(';').map(c => c.trim());
+    const authCookie = cookies.find(c => c.startsWith('nanobot-auth-token='));
+
+    if (!authCookie) {
+        return false;
+    }
+
+    const token = authCookie.split('=')[1];
+    return validateSession(token);
+}

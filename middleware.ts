@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { validateSession } from './app/lib/auth';
+
+// Middleware runs in Edge Runtime and cannot share memory with Node.js runtime
+// So we do a simple token existence check here
+// The API routes will do proper validation with the session store
 
 export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
@@ -13,18 +16,11 @@ export function middleware(request: NextRequest) {
     // Check for the authentication token
     const token = request.cookies.get('nanobot-auth-token')?.value;
 
-    // Debug logging
-    if (!token) {
-        console.log(`[Middleware] No token found for ${pathname}, redirecting to login`);
-    }
+    // Simple check: token must exist and be a valid hex string (64 chars)
+    const isValidFormat = token && /^[a-f0-9]{64}$/.test(token);
 
-    // Validate the token server-side
-    if (!token || !validateSession(token)) {
-        if (!token) {
-            console.log(`[Middleware] Missing token for ${pathname}`);
-        } else {
-            console.log(`[Middleware] Invalid/expired token for ${pathname}`);
-        }
+    if (!isValidFormat) {
+        console.log(`[Middleware] No valid token found for ${pathname}`);
 
         // If it's an API route, send 401
         if (pathname.startsWith('/api/')) {
@@ -34,7 +30,7 @@ export function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL('/login', request.url));
     }
 
-    console.log(`[Middleware] Valid session for ${pathname}`);
+    console.log(`[Middleware] Token present for ${pathname}`);
 
     // Add security headers to all responses
     const response = NextResponse.next();
