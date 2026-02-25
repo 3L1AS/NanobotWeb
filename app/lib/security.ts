@@ -8,12 +8,18 @@ import path from 'path';
  * @throws Error if the path attempts to escape the base directory
  */
 export function validatePath(userPath: string, baseDir: string): string {
-    if (!userPath || typeof userPath !== 'string') {
+    // Allow empty string (root of workspace) but not null/undefined
+    if (userPath === null || userPath === undefined || typeof userPath !== 'string') {
         throw new Error('Invalid path parameter');
     }
 
     // Normalize the base directory (resolve to absolute path)
     const normalizedBase = path.resolve(baseDir);
+
+    // Empty string means root directory
+    if (userPath === '' || userPath === '/') {
+        return normalizedBase;
+    }
 
     // Normalize the user path and join with base (this handles ../ and other traversals)
     const normalizedPath = path.normalize(userPath).replace(/^(\.\.(\/|\\|$))+/, '');
