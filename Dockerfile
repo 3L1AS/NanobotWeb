@@ -19,8 +19,8 @@ RUN apk add --no-cache docker-cli
 ARG DOCKER_GID=999
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 nextjs && \
-    addgroup -g ${DOCKER_GID} docker 2>/dev/null || true && \
-    adduser nextjs docker
+    (addgroup -g ${DOCKER_GID} docker || addgroup docker) && \
+    addgroup nextjs docker
 
 # Copy built application with proper ownership
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
