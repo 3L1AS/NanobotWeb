@@ -8,7 +8,8 @@ NanobotWeb runs in its own lightweight Docker container alongside your existing 
 
 ### Core Functionality
 - **Persistent Chat Sessions**: Spin up multiple distinct conversations. The dashboard executes natively through the Docker Socket to chat seamlessly with your running bot.
-- **Workspace File Explorer**: A complete built-in IDE for your `~/.nanobot/workspace/`. Browse into `skills/`, `memory/`, and `sessions/`, select any file (like your `HEARTBEAT.md` cron jobs), and edit them via a real-time text editor.
+- **Workspace File Explorer**: A complete built-in IDE mapped directly to your `.nanobot` folder. Browse files, create/rename/delete items, download binary files, natively preview media (images, audio, video), and edit text files via a real-time text editor.
+- **Live Logs Tracking**: Monitor the live output of your `nanobot-gateway` container with powerful search, error/warn level filtering, smart auto-pause tracking, and one-click log exports.
 - **GUI Settings**: Manage your core `config.json` seamlessly. Easily change models, default provider APIs, and workspace paths without dealing with raw JSON brackets.
 - **Beautiful Glassmorphism UI**: Native Dark Mode (`#09090b` base) paired with sleek gradients, Tailwind CSS animations, and `lucide-react` iconography.
 
