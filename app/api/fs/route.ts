@@ -4,7 +4,7 @@ import path from 'path';
 import fs from 'fs/promises';
 import { validatePath } from '../../lib/security';
 
-const getWorkspaceDir = () => path.join(os.homedir(), '.nanobot', 'workspace');
+const getWorkspaceDir = () => path.join(os.homedir(), '.nanobot');
 
 export type FsItem = {
     name: string;
@@ -53,5 +53,48 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-    return NextResponse.json({ error: 'Method not implemented' }, { status: 405 });
+    try {
+        const payload = await req.json();
+        const { action, path: targetPath, newPath, type } = payload;
+        
+        const workspaceDir = getWorkspaceDir();
+
+        if (!action || !targetPath) {
+            return NextResponse.json({ error: 'Missing required parameters' }, { status: 400 });
+        }
+
+        const fullPath = validatePath(targetPath, workspaceDir);
+
+        if (action === 'create_dir') {
+            await fs.mkdir(fullPath, { recursive: true });
+            return NextResponse.json({ success: true });
+        }
+        
+        if (action === 'delete') {
+            const stats = await fs.stat(fullPath);
+            if (stats.isDirectory()) {
+                await fs.rm(fullPath, { recursive: true, force: true });
+            } else {
+                await fs.unlink(fullPath);
+            }
+            return NextResponse.json({ success: true });
+        }
+        
+        if (action === 'rename' || action === 'copy') {
+            if (!newPath) return NextResponse.json({ error: 'Missing newPath' }, { status: 400 });
+            const fullNewPath = validatePath(newPath, workspaceDir);
+            
+            if (action === 'rename') {
+                await fs.rename(fullPath, fullNewPath);
+            } else if (action === 'copy') {
+                await fs.cp(fullPath, fullNewPath, { recursive: true });
+            }
+            return NextResponse.json({ success: true });
+        }
+
+        return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+    } catch (error: any) {
+        console.error(`[FS POST] Error: ${error.message}`);
+        return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 }

@@ -6,7 +6,7 @@ import {
     Activity, Settings, FolderOpen, Save, RefreshCw,
     Bot, Server, CornerDownLeft, Send, LogOut,
     FileText, Folder, Plus, Trash2, Cpu, CheckCircle2, MessageSquare, PlusCircle, XCircle,
-    Terminal, Filter, Download, Pause, Play, BarChart
+    Terminal, Filter, Download, Pause, Play, BarChart, FolderPlus, FilePlus, Copy, Edit2
 } from 'lucide-react';
 
 type FsItem = { name: string; type: 'file' | 'directory'; path: string };
@@ -178,6 +178,69 @@ export default function Dashboard() {
             showToast('Error saving config', 'error');
         }
         setIsSaving(false);
+    };
+
+    const handleCreateFile = async () => {
+        const name = prompt('Enter new file name:');
+        if (!name) return;
+        const target = currentPath ? `${currentPath}/${name}` : name;
+        try {
+            const res = await fetch('/api/workspace', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ file: target, content: '' })
+            });
+            if (res.ok) {
+                fetchFiles(currentPath);
+                openFile(target);
+                showToast('File created successfully', 'success');
+            } else {
+                showToast('Failed to create file', 'error');
+            }
+        } catch (e) {
+            showToast('Error creating file', 'error');
+        }
+    };
+
+    const handleFsAction = async (action: 'create_dir' | 'delete' | 'rename' | 'copy', fileItem?: FsItem) => {
+        let target = fileItem?.path || currentPath;
+        let newPath = '';
+        
+        if (action === 'create_dir') {
+            const name = prompt('Enter new folder name:');
+            if (!name) return;
+            target = currentPath ? `${currentPath}/${name}` : name;
+        } else if (action === 'delete') {
+            if (!confirm(`Are you sure you want to delete ${fileItem?.name}?`)) return;
+        } else if (action === 'rename') {
+            const name = prompt('Enter new name:', fileItem?.name);
+            if (!name) return;
+            newPath = fileItem?.path.replace(/[^/]+$/, name) || name;
+        } else if (action === 'copy') {
+            const name = prompt('Enter name for the copy:', fileItem?.name + ' (copy)');
+            if (!name) return;
+            newPath = fileItem?.path.replace(/[^/]+$/, name) || name;
+        }
+        
+        try {
+            const res = await fetch('/api/fs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action, path: target, newPath })
+            });
+            if (res.ok) {
+                fetchFiles(currentPath);
+                if (action === 'delete' && activeFile === target) {
+                    setActiveFile(null);
+                    setFileContent('');
+                }
+                showToast('Operation successful', 'success');
+            } else {
+                showToast('Operation failed', 'error');
+            }
+        } catch (e) {
+            showToast('Operation error', 'error');
+        }
     };
 
     const handleSaveFile = async () => {
@@ -436,32 +499,54 @@ export default function Dashboard() {
                     {activeTab === 'explorer' && (
                         <div className="flex h-full animate-in fade-in">
                             {/* File Tree Panel */}
-                            <div className="w-72 border-r border-white/5 bg-black/20 flex flex-col">
-                                <div className="p-3 border-b border-white/5 flex items-center gap-2 text-xs font-mono text-zinc-400 bg-black/40">
-                                    <FolderOpen className="w-4 h-4" />
-                                    <span>workspace/{currentPath}</span>
-                                    {currentPath !== '' && (
-                                        <button onClick={() => {
-                                            const parent = currentPath.split('/').slice(0, -1).join('/');
-                                            fetchFiles(parent);
-                                        }} className="ml-auto hover:text-white">
-                                            Back
+                            <div className="w-80 border-r border-white/5 bg-black/20 flex flex-col shrink-0">
+                                <div className="p-3 border-b border-white/5 flex items-center justify-between text-xs font-mono text-zinc-400 bg-black/40 gap-2 shrink-0">
+                                    <div className="flex items-center gap-2 overflow-hidden flex-1">
+                                        <FolderOpen className="w-4 h-4 shrink-0" />
+                                        <span className="truncate" title={`.nanobot${currentPath ? `/${currentPath}` : ''}`}>
+                                            .nanobot{currentPath ? `/${currentPath}` : ''}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-1 shrink-0">
+                                        <button onClick={handleCreateFile} className="p-1 text-zinc-400 hover:text-white hover:bg-white/10 rounded transition" title="New File">
+                                            <FilePlus className="w-4 h-4" />
                                         </button>
-                                    )}
+                                        <button onClick={() => handleFsAction('create_dir')} className="p-1 text-zinc-400 hover:text-white hover:bg-white/10 rounded transition" title="New Folder">
+                                            <FolderPlus className="w-4 h-4" />
+                                        </button>
+                                        {currentPath !== '' && (
+                                            <button onClick={() => {
+                                                const parent = currentPath.split('/').slice(0, -1).join('/');
+                                                fetchFiles(parent);
+                                            }} className="p-1 hover:text-white bg-white/5 hover:bg-white/10 rounded transition ml-1 px-2 border border-white/5" title="Go up">
+                                                Back
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
-                                <div className="overflow-y-auto flex-1 p-2 space-y-0.5">
+                                <div className="overflow-y-auto flex-1 p-2 space-y-0.5 custom-scrollbar">
                                     {files.length === 0 && <p className="text-xs text-zinc-600 p-2 text-center">Directory empty</p>}
                                     {files.map((file, i) => (
-                                        <button key={i} onClick={() => {
-                                            if (file.type === 'directory') {
-                                                fetchFiles(file.path);
-                                            } else {
-                                                openFile(file.path);
-                                            }
-                                        }} className={`w-full text-left flex items-center gap-2 px-3 py-2 rounded-md text-sm transition ${activeFile === file.path ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'}`}>
-                                            {file.type === 'directory' ? <Folder className="w-4 h-4 text-blue-400" /> : <FileText className="w-4 h-4 text-pink-400" />}
-                                            <span className="truncate">{file.name}</span>
-                                        </button>
+                                        <div key={i} className={`group w-full flex items-center justify-between px-2 py-1.5 rounded-md text-sm transition ${activeFile === file.path ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'}`}>
+                                            <button onClick={() => {
+                                                if (file.type === 'directory') fetchFiles(file.path);
+                                                else openFile(file.path);
+                                            }} className="flex items-center gap-2 flex-1 overflow-hidden text-left" title={file.name}>
+                                                {file.type === 'directory' ? <Folder className="w-4 h-4 text-blue-400 shrink-0" /> : <FileText className="w-4 h-4 text-pink-400 shrink-0" />}
+                                                <span className="truncate">{file.name}</span>
+                                            </button>
+                                            <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2">
+                                                <button onClick={() => handleFsAction('copy', file)} className="p-1 hover:text-white transition" title="Copy">
+                                                    <Copy className="w-3.5 h-3.5" />
+                                                </button>
+                                                <button onClick={() => handleFsAction('rename', file)} className="p-1 hover:text-white transition" title="Rename">
+                                                    <Edit2 className="w-3.5 h-3.5" />
+                                                </button>
+                                                <button onClick={() => handleFsAction('delete', file)} className="p-1 hover:text-red-400 transition" title="Delete">
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
+                                        </div>
                                     ))}
                                 </div>
                             </div>

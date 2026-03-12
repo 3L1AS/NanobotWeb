@@ -4,7 +4,7 @@ import path from 'path';
 import fs from 'fs/promises';
 import { validatePath } from '../../lib/security';
 
-const getWorkspaceDir = () => path.join(os.homedir(), '.nanobot', 'workspace');
+const getWorkspaceDir = () => path.join(os.homedir(), '.nanobot');
 
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
