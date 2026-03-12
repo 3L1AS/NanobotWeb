@@ -80,13 +80,28 @@ export default function Dashboard() {
         }
     };
 
+    const getFileType = (path: string) => {
+        const ext = path.split('.').pop()?.toLowerCase() || '';
+        if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'ico'].includes(ext)) return 'image';
+        if (['mp4', 'webm', 'ogg'].includes(ext)) return 'video';
+        if (['mp3', 'wav'].includes(ext)) return 'audio';
+        if (['zip', 'rar', '7z', 'pdf', 'exe', 'bin', 'tar', 'gz'].includes(ext)) return 'binary';
+        return 'text';
+    };
+
     const openFile = async (filePath: string) => {
         try {
-            const res = await fetch(`/api/workspace?file=${encodeURIComponent(filePath)}`);
+            setActiveFile(filePath);
+            
+            if (getFileType(filePath) !== 'text') {
+                setFileContent('');
+                return;
+            }
+
+            const res = await fetch(`/api/workspace?file=${encodeURIComponent(filePath)}&t=${Date.now()}`);
             if (res.status === 401) return;
             const data = await res.json();
             setFileContent(data.content || '');
-            setActiveFile(filePath);
         } catch (e) {
             console.error(e);
         }
@@ -536,13 +551,18 @@ export default function Dashboard() {
                                                 <span className="truncate">{file.name}</span>
                                             </button>
                                             <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2">
-                                                <button onClick={() => handleFsAction('copy', file)} className="p-1 hover:text-white transition" title="Copy">
+                                                {file.type === 'file' && (
+                                                    <button onClick={(e) => { e.stopPropagation(); window.open(`/api/workspace?file=${encodeURIComponent(file.path)}&raw=true&download=true`, '_blank'); }} className="p-1 hover:text-white transition" title="Download">
+                                                        <Download className="w-3.5 h-3.5" />
+                                                    </button>
+                                                )}
+                                                <button onClick={(e) => { e.stopPropagation(); handleFsAction('copy', file); }} className="p-1 hover:text-white transition" title="Copy">
                                                     <Copy className="w-3.5 h-3.5" />
                                                 </button>
-                                                <button onClick={() => handleFsAction('rename', file)} className="p-1 hover:text-white transition" title="Rename">
+                                                <button onClick={(e) => { e.stopPropagation(); handleFsAction('rename', file); }} className="p-1 hover:text-white transition" title="Rename">
                                                     <Edit2 className="w-3.5 h-3.5" />
                                                 </button>
-                                                <button onClick={() => handleFsAction('delete', file)} className="p-1 hover:text-red-400 transition" title="Delete">
+                                                <button onClick={(e) => { e.stopPropagation(); handleFsAction('delete', file); }} className="p-1 hover:text-red-400 transition" title="Delete">
                                                     <Trash2 className="w-3.5 h-3.5" />
                                                 </button>
                                             </div>
@@ -552,22 +572,54 @@ export default function Dashboard() {
                             </div>
 
                             {/* File Editor Panel */}
-                            <div className="flex-1 flex flex-col bg-black/40 backdrop-blur-sm relative">
+                            <div className="flex-1 flex flex-col bg-black/40 backdrop-blur-sm relative overflow-hidden">
                                 {activeFile ? (
                                     <>
-                                        <div className="h-12 border-b border-white/5 flex items-center justify-between px-4 bg-black/20">
-                                            <span className="text-sm font-mono text-zinc-300 flex items-center gap-2"><FileText className="w-4 h-4" /> {activeFile}</span>
-                                            <button onClick={handleSaveFile} disabled={isSaving} className="flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-md text-sm font-medium transition shadow-sm disabled:opacity-50 border border-white/5">
-                                                {isSaving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                                                Save File
-                                            </button>
+                                        <div className="h-12 border-b border-white/5 flex items-center justify-between px-4 bg-black/20 shrink-0">
+                                            <span className="text-sm font-mono text-zinc-300 flex items-center gap-2 truncate pr-4">
+                                                <FileText className="w-4 h-4 shrink-0" /> {activeFile}
+                                            </span>
+                                            <div className="flex items-center gap-2 shrink-0">
+                                                <button onClick={() => window.open(`/api/workspace?file=${encodeURIComponent(activeFile)}&raw=true&download=true`, '_blank')} className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-zinc-300 px-3 py-1.5 rounded-md text-sm font-medium transition shadow-sm border border-white/5">
+                                                    <Download className="w-4 h-4" /> Download
+                                                </button>
+                                                {getFileType(activeFile) === 'text' && (
+                                                    <button onClick={handleSaveFile} disabled={isSaving} className="flex items-center gap-2 bg-indigo-600/80 hover:bg-indigo-600 text-white px-3 py-1.5 rounded-md text-sm font-medium transition shadow-sm disabled:opacity-50 border border-indigo-500/50">
+                                                        {isSaving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                                                        Save
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
-                                        <textarea
-                                            value={fileContent}
-                                            onChange={e => setFileContent(e.target.value)}
-                                            className="flex-1 w-full bg-transparent p-6 text-sm font-mono text-zinc-300 focus:outline-none resize-none"
-                                            spellCheck={false}
-                                        />
+                                        
+                                        <div className="flex-1 overflow-auto bg-transparent relative flex flex-col">
+                                            {getFileType(activeFile) === 'image' ? (
+                                                <div className="flex-1 flex items-center justify-center p-8">
+                                                    <img src={`/api/workspace?file=${encodeURIComponent(activeFile)}&raw=true`} alt={activeFile} className="max-w-full max-h-full object-contain rounded drop-shadow-2xl" />
+                                                </div>
+                                            ) : getFileType(activeFile) === 'video' ? (
+                                                <div className="flex-1 flex items-center justify-center p-8">
+                                                    <video src={`/api/workspace?file=${encodeURIComponent(activeFile)}&raw=true`} controls className="max-w-full max-h-full rounded drop-shadow-2xl" />
+                                                </div>
+                                            ) : getFileType(activeFile) === 'audio' ? (
+                                                <div className="flex-1 flex items-center justify-center p-8">
+                                                    <audio src={`/api/workspace?file=${encodeURIComponent(activeFile)}&raw=true`} controls className="w-full max-w-md drop-shadow-2xl" />
+                                                </div>
+                                            ) : getFileType(activeFile) === 'binary' ? (
+                                                <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 gap-4">
+                                                    <Download className="w-16 h-16 opacity-20" />
+                                                    <p>Binary format file</p>
+                                                    <p className="text-sm">Click Download to save this file directly.</p>
+                                                </div>
+                                            ) : (
+                                                <textarea
+                                                    value={fileContent}
+                                                    onChange={e => setFileContent(e.target.value)}
+                                                    className="absolute inset-0 w-full h-full bg-transparent p-6 text-sm font-mono text-zinc-300 focus:outline-none resize-none custom-scrollbar"
+                                                    spellCheck={false}
+                                                />
+                                            )}
+                                        </div>
                                     </>
                                 ) : (
                                     <div className="flex-1 flex flex-col items-center justify-center text-zinc-600">

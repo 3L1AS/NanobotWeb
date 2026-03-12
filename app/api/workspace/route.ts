@@ -6,14 +6,39 @@ import { validatePath } from '../../lib/security';
 
 const getWorkspaceDir = () => path.join(os.homedir(), '.nanobot');
 
+const getContentType = (ext: string) => {
+    const types: Record<string, string> = {
+        '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+        '.gif': 'image/gif', '.webp': 'image/webp', '.svg': 'image/svg+xml',
+        '.pdf': 'application/pdf', '.zip': 'application/zip',
+        '.mp3': 'audio/mpeg', '.mp4': 'video/mp4', '.wav': 'audio/wav',
+    };
+    return types[ext] || 'application/octet-stream';
+};
+
 export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const file = searchParams.get('file') || 'HEARTBEAT.md';
+    const isRaw = searchParams.get('raw') === 'true';
+    const isDownload = searchParams.get('download') === 'true';
 
     try {
         // Validate and sanitize the file path to prevent directory traversal
         const workspaceDir = getWorkspaceDir();
         const filePath = validatePath(file, workspaceDir);
+
+        if (isRaw) {
+            const buffer = await fs.readFile(filePath);
+            const ext = path.extname(filePath).toLowerCase();
+            const disposition = isDownload ? 'attachment' : 'inline';
+            return new NextResponse(buffer, {
+                status: 200,
+                headers: {
+                    'Content-Type': getContentType(ext),
+                    'Content-Disposition': `${disposition}; filename="${path.basename(filePath)}"`,
+                },
+            });
+        }
 
         const data = await fs.readFile(filePath, 'utf8');
         return NextResponse.json({ content: data });
