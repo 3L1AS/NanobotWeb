@@ -365,7 +365,7 @@ export default function Dashboard() {
                         <SidebarItem icon={Terminal} label="Logs" id="logs" />
                         <SidebarItem icon={MessageSquare} label="Chat Sessions" id="chat" />
                         <SidebarItem icon={FolderOpen} label="File Explorer" id="explorer" />
-                        <SidebarItem icon={Settings} label="GUI Settings" id="settings" />
+                        <SidebarItem icon={Settings} label="Settings" id="settings" />
                     </nav>
                 </div>
 
