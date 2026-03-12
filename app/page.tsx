@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     Activity, Settings, FolderOpen, Save, RefreshCw,
-    Bot, Server, CornerDownLeft, Send, LogOut,
+    Bot, Server, CornerDownLeft, Send, LogOut, Moon, Sun,
     FileText, Folder, Plus, Trash2, Cpu, CheckCircle2, MessageSquare, PlusCircle, XCircle,
     Terminal, Filter, Download, Pause, Play, BarChart, FolderPlus, FilePlus, Copy, Edit2
 } from 'lucide-react';
@@ -44,6 +44,25 @@ export default function Dashboard() {
     const showToast = (msg: string, type: 'success' | 'error') => {
         setToast({ msg, type });
         setTimeout(() => setToast(null), 3000);
+    };
+
+    const lineNumbersRef = useRef<HTMLDivElement>(null);
+    const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+
+    useEffect(() => {
+        const savedTheme = localStorage.getItem('nanobot-theme');
+        if (savedTheme === 'light') {
+            setTheme('light');
+            document.documentElement.classList.add('theme-light');
+        }
+    }, []);
+
+    const toggleTheme = () => {
+        const next = theme === 'dark' ? 'light' : 'dark';
+        setTheme(next);
+        localStorage.setItem('nanobot-theme', next);
+        if (next === 'light') document.documentElement.classList.add('theme-light');
+        else document.documentElement.classList.remove('theme-light');
     };
 
     const fetchStatus = async () => {
@@ -417,8 +436,8 @@ export default function Dashboard() {
                                 </div>
                             </div>
 
-                            <div className="p-6 rounded-2xl bg-white/5 border border-white/10 flex flex-col gap-4 relative justify-between overflow-hidden group hover:border-white/20 transition-all">
-                                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                            <div className="p-6 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex flex-col gap-4 relative justify-between overflow-hidden group hover:border-indigo-500/30 transition-all">
+                                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-lg font-medium text-zinc-200">Configuration Metrics</h3>
                                     <Cpu className="text-zinc-400 w-5 h-5" />
@@ -612,12 +631,28 @@ export default function Dashboard() {
                                                     <p className="text-sm">Click Download to save this file directly.</p>
                                                 </div>
                                             ) : (
-                                                <textarea
-                                                    value={fileContent}
-                                                    onChange={e => setFileContent(e.target.value)}
-                                                    className="absolute inset-0 w-full h-full bg-transparent p-6 text-sm font-mono text-zinc-300 focus:outline-none resize-none custom-scrollbar"
-                                                    spellCheck={false}
-                                                />
+                                                <div className="absolute inset-0 flex">
+                                                    <div 
+                                                        ref={lineNumbersRef}
+                                                        className="w-12 flex-shrink-0 bg-black/20 border-r border-white/5 text-right pr-3 py-6 text-xs text-zinc-600 font-mono tracking-tighter overflow-hidden select-none"
+                                                    >
+                                                        {fileContent.split('\n').map((_, i) => (
+                                                            <div key={i} className="leading-5">{i + 1}</div>
+                                                        ))}
+                                                    </div>
+                                                    <textarea
+                                                        value={fileContent}
+                                                        onChange={e => setFileContent(e.target.value)}
+                                                        onScroll={e => {
+                                                            if (lineNumbersRef.current) {
+                                                                lineNumbersRef.current.scrollTop = e.currentTarget.scrollTop;
+                                                            }
+                                                        }}
+                                                        className="flex-1 w-full h-full bg-transparent pl-4 pr-6 py-6 text-sm outline-none font-mono text-zinc-300 focus:outline-none resize-none custom-scrollbar whitespace-pre overflow-auto leading-5"
+                                                        spellCheck={false}
+                                                        wrap="off"
+                                                    />
+                                                </div>
                                             )}
                                         </div>
                                     </>
@@ -671,8 +706,15 @@ export default function Dashboard() {
                                                     />
                                                 </div>
                                                 <div>
+                                                    <label className="text-xs font-semibold text-zinc-500 uppercase tracking-widest block mb-2">Theme</label>
+                                                    <button onClick={toggleTheme} className="w-full flex justify-between items-center bg-black/50 hover:bg-black/30 transition border border-white/10 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500/50">
+                                                        <span className="capitalize">{theme} Mode</span>
+                                                        {theme === 'dark' ? <Moon className="w-4 h-4 text-indigo-400" /> : <Sun className="w-4 h-4 text-orange-400" />}
+                                                    </button>
+                                                </div>
+                                                <div>
                                                     <label className="text-xs font-semibold text-zinc-500 uppercase tracking-widest block mb-2">Workspace Dir</label>
-                                                    <input type="text" value="~/.nanobot/workspace" disabled className="w-full bg-black/20 border border-white/5 rounded-lg px-4 py-2.5 text-sm text-zinc-500 cursor-not-allowed" />
+                                                    <input type="text" value="~/.nanobot" disabled className="w-full bg-black/20 border border-white/5 rounded-lg px-4 py-2.5 text-sm text-zinc-500 cursor-not-allowed" />
                                                 </div>
                                             </div>
                                         </div>
