@@ -107,6 +107,18 @@ docker-compose build --no-cache
 docker-compose up -d
 ```
 
+### Issue 6: File Explorer Cannot Save/Delete files (Permission Denied)
+**Symptom**
+Your dashboard loads perfectly, but File Explorer is completely empty, or creating/saving files triggers a UI error.
+
+**Fix**
+Since the docker container runs secured under an unprivileged user (UID `1001`), it needs explicit recursive ownership and permissions to edit inside the top-level `.nanobot` vault:
+```bash
+sudo chown -R 1001:1001 ~/.nanobot
+sudo chmod -R 775 ~/.nanobot
+```
+Once run, hard refresh your browser (`Ctrl+Shift+R`) and it will work perfectly.
+
 ## Detailed Diagnostics
 
 If still not working, provide these outputs:

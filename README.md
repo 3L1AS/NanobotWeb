@@ -63,6 +63,7 @@ See [SECURITY.md](SECURITY.md) for complete security documentation.
 5. **Set correct file permissions:**
    ```bash
    sudo chown -R 1001:1001 ~/.nanobot
+   sudo chmod -R 775 ~/.nanobot
    ```
 
 6. **Build and start the container:**
@@ -109,7 +110,7 @@ If you see "permission denied" errors accessing the Docker socket:
 ### File Explorer Empty
 If the File Explorer shows no files:
 1. Check permissions: `ls -la ~/.nanobot/workspace/`
-2. Fix if needed: `sudo chown -R 1001:1001 ~/.nanobot`
+2. Fix if needed: `sudo chown -R 1001:1001 ~/.nanobot && sudo chmod -R 775 ~/.nanobot`
 3. Restart container: `docker-compose restart`
 
 ### Login Issues

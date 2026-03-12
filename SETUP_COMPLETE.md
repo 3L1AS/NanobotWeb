@@ -103,8 +103,11 @@ The container runs as UID 1001, so it needs access to your `.nanobot` directory:
 # Create workspace directory if it doesn't exist
 mkdir -p ~/.nanobot/workspace
 
-# Set ownership to UID 1001
+# Set ownership to UID 1001 for the container to access it
 sudo chown -R 1001:1001 ~/.nanobot
+
+# Ensure future subdirectories and files can be read/written
+sudo chmod -R 775 ~/.nanobot
 ```
 
 ### Step 5: Build and Start
@@ -211,6 +214,7 @@ mkdir -p ~/.nanobot/workspace
 **B. Permission issue:**
 ```bash
 sudo chown -R 1001:1001 ~/.nanobot
+sudo chmod -R 775 ~/.nanobot
 ```
 
 **C. Volume not mounted:**
