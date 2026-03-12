@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import {
     Activity, Settings, FolderOpen, Save, RefreshCw,
     Bot, Server, CornerDownLeft, Send, LogOut,
-    FileText, Folder, Plus, Trash2, Cpu, CheckCircle2, MessageSquare, PlusCircle, XCircle
+    FileText, Folder, Plus, Trash2, Cpu, CheckCircle2, MessageSquare, PlusCircle, XCircle,
+    Terminal, Filter, Download, Pause, Play, BarChart
 } from 'lucide-react';
 
 type FsItem = { name: string; type: 'file' | 'directory'; path: string };
@@ -13,7 +14,7 @@ type Config = any;
 
 export default function Dashboard() {
     const router = useRouter();
-    const [activeTab, setActiveTab] = useState<'status' | 'explorer' | 'settings' | 'chat'>('status');
+    const [activeTab, setActiveTab] = useState<'status' | 'explorer' | 'settings' | 'chat' | 'logs'>('status');
 
     const [daemonStatus, setDaemonStatus] = useState<'online' | 'offline' | 'loading'>('loading');
     const [config, setConfig] = useState<Config>(null);
@@ -30,6 +31,12 @@ export default function Dashboard() {
     const [chatInput, setChatInput] = useState('');
     const [messages, setMessages] = useState<Record<string, { role: 'user' | 'assistant', content: string }[]>>({});
     const [isChatLoading, setIsChatLoading] = useState(false);
+
+    // Logs State
+    const [rawLogs, setRawLogs] = useState<string>('');
+    const [isLogsTracking, setIsLogsTracking] = useState<boolean>(true);
+    const [logsSearch, setLogsSearch] = useState<string>('');
+    const [logsLevel, setLogsLevel] = useState<'All' | 'Info' | 'Debug' | 'Warn' | 'Error'>('All');
 
     const [isSaving, setIsSaving] = useState(false);
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
@@ -92,6 +99,67 @@ export default function Dashboard() {
         const interval = setInterval(fetchStatus, 5000);
         return () => clearInterval(interval);
     }, []);
+
+    const fetchLogs = async () => {
+        if (!isLogsTracking) return;
+        try {
+            const res = await fetch('/api/logs?limit=1000');
+            if (res.ok) {
+                const data = await res.json();
+                setRawLogs(data.logs || '');
+            }
+        } catch(e) {}
+    };
+
+    useEffect(() => {
+        if (activeTab === 'logs') {
+            fetchLogs();
+            if (isLogsTracking) {
+                const interval = setInterval(fetchLogs, 3000);
+                return () => clearInterval(interval);
+            }
+        }
+    }, [activeTab, isLogsTracking]);
+
+    const getParsedLogs = () => {
+        if (!rawLogs) return [];
+        const lines = rawLogs.split('\n').filter(l => l.trim() !== '');
+        return lines.map(line => {
+            const upper = line.toUpperCase();
+            let level: 'Info' | 'Debug' | 'Warn' | 'Error' = 'Info';
+            if (upper.includes('ERROR') || upper.includes('ERR:') || upper.includes('[ERR]')) level = 'Error';
+            else if (upper.includes('WARN')) level = 'Warn';
+            else if (upper.includes('DEBUG')) level = 'Debug';
+            return { raw: line, level };
+        });
+    };
+
+    const parsedLogs = getParsedLogs();
+    
+    const filteredLogs = parsedLogs.filter(log => {
+        if (logsLevel !== 'All' && log.level !== logsLevel) return false;
+        if (logsSearch && !log.raw.toLowerCase().includes(logsSearch.toLowerCase())) return false;
+        return true;
+    });
+
+    const logsStats = {
+        total: parsedLogs.length,
+        errors: parsedLogs.filter(l => l.level === 'Error').length,
+        warnings: parsedLogs.filter(l => l.level === 'Warn').length
+    };
+
+    const handleExportLogs = () => {
+        const text = filteredLogs.map(l => l.raw).join('\n');
+        const blob = new Blob([text], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `nanobot-logs-${new Date().toISOString().replace(/:/g,'-')}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
 
     const handleSaveConfig = async () => {
         setIsSaving(true);
@@ -216,6 +284,7 @@ export default function Dashboard() {
 
                     <nav className="flex flex-col gap-2">
                         <SidebarItem icon={Activity} label="Overview" id="status" />
+                        <SidebarItem icon={Terminal} label="Logs" id="logs" />
                         <SidebarItem icon={MessageSquare} label="Chat Sessions" id="chat" />
                         <SidebarItem icon={FolderOpen} label="File Explorer" id="explorer" />
                         <SidebarItem icon={Settings} label="GUI Settings" id="settings" />
@@ -492,6 +561,96 @@ export default function Dashboard() {
                                         </div>
                                     </>
                                 )}
+                            </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'logs' && (
+                        <div className="flex flex-col h-full animate-in fade-in bg-black/40">
+                            {/* Toolbar */}
+                            <div className="p-4 border-b border-white/5 flex flex-col md:flex-row gap-4 items-center justify-between bg-black/20 shrink-0">
+                                <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                                    {/* Search */}
+                                    <div className="relative flex items-center max-w-sm w-full md:w-64">
+                                        <Filter className="w-4 h-4 text-zinc-400 absolute left-3" />
+                                        <input
+                                            type="text"
+                                            value={logsSearch}
+                                            onChange={e => setLogsSearch(e.target.value)}
+                                            placeholder="Search logs..."
+                                            className="w-full pl-9 pr-4 py-2 bg-black/40 border border-white/10 rounded-lg text-sm text-white focus:outline-none focus:ring-1 focus:ring-indigo-500/50 transition"
+                                        />
+                                    </div>
+                                    
+                                    {/* Filter */}
+                                    <div className="flex items-center bg-black/40 border border-white/10 rounded-lg overflow-hidden">
+                                        {(['All', 'Info', 'Debug', 'Warn', 'Error'] as const).map(level => (
+                                            <button
+                                                key={level}
+                                                onClick={() => setLogsLevel(level)}
+                                                className={`px-3 py-2 text-xs font-medium transition ${logsLevel === level ? 'bg-indigo-600/20 text-indigo-300' : 'text-zinc-400 hover:bg-white/5 hover:text-white'}`}
+                                            >
+                                                {level}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                                
+                                <div className="flex items-center gap-3 w-full md:w-auto shrink-0 justify-end">
+                                    <button 
+                                        onClick={() => setIsLogsTracking(!isLogsTracking)}
+                                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition border ${isLogsTracking ? 'bg-blue-500/10 border-blue-500/20 text-blue-400 hover:bg-blue-500/20' : 'bg-zinc-500/10 border-zinc-500/20 text-zinc-400 hover:bg-zinc-500/20'}`}
+                                    >
+                                        {isLogsTracking ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                                        {isLogsTracking ? 'Tracking' : 'Paused'}
+                                    </button>
+                                    
+                                    <button 
+                                        onClick={handleExportLogs}
+                                        className="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/5 text-zinc-300 rounded-lg text-sm font-medium transition"
+                                    >
+                                        <Download className="w-4 h-4" /> Export
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            {/* Statistics Bar */}
+                            <div className="px-4 py-2 bg-indigo-900/10 border-b border-indigo-500/10 flex items-center gap-6 text-xs shrink-0 overflow-x-auto">
+                                <div className="flex items-center gap-2 text-indigo-300">
+                                    <BarChart className="w-3.5 h-3.5" /> Stats:
+                                </div>
+                                <div className="text-zinc-400">Total Lines: <span className="text-zinc-200 font-medium">{logsStats.total}</span></div>
+                                <div className="text-red-400">Errors: <span className="font-medium">{logsStats.errors}</span></div>
+                                <div className="text-orange-400">Warnings: <span className="font-medium">{logsStats.warnings}</span></div>
+                                <div className="ml-auto text-zinc-500 text-end">
+                                    Showing {filteredLogs.length} matching entries
+                                </div>
+                            </div>
+
+                            {/* Logs Display */}
+                            <div className="flex-1 overflow-auto p-4 md:p-6 bg-transparent custom-scrollbar">
+                                <div className="max-w-7xl mx-auto space-y-1 font-mono text-sm leading-relaxed container-log-output">
+                                    {filteredLogs.length === 0 ? (
+                                        <div className="h-64 flex flex-col items-center justify-center text-zinc-500 gap-4">
+                                            <Terminal className="w-12 h-12 opacity-20" />
+                                            <p>No log records match the current filters.</p>
+                                        </div>
+                                    ) : (
+                                        filteredLogs.map((log, i) => (
+                                            <div 
+                                                key={i} 
+                                                className={`py-1 px-3 rounded break-all whitespace-pre-wrap transition-colors hover:bg-white/5 ${
+                                                    log.level === 'Error' ? 'text-red-400 bg-red-500/5' : 
+                                                    log.level === 'Warn' ? 'text-orange-400 bg-orange-500/5' : 
+                                                    log.level === 'Debug' ? 'text-zinc-500' : 
+                                                    'text-zinc-300'
+                                                }`}
+                                            >
+                                                {log.raw}
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
                             </div>
                         </div>
                     )}

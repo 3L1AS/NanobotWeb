@@ -63,3 +63,19 @@ export async function execInContainer(commandArgs: string[]): Promise<string> {
         });
     });
 }
+
+/**
+ * Gets the logs of the nanobot container.
+ */
+export async function getContainerLogs(lines: number = 1000): Promise<string> {
+    if (!validateContainerName(CONTAINER_NAME)) {
+        throw new Error('Invalid container name');
+    }
+
+    return new Promise((resolve) => {
+        execFile('docker', ['logs', '--tail', lines.toString(), CONTAINER_NAME], { maxBuffer: 1024 * 1024 * 10 }, (error, stdout, stderr) => {
+            // Docker logs command outputs stdout to stdout and stderr to stderr. We want to combine them.
+            resolve(stdout + stderr);
+        });
+    });
+}
