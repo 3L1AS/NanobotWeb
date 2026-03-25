@@ -65,6 +65,35 @@ export async function execInContainer(commandArgs: string[]): Promise<string> {
 }
 
 /**
+ * Executes a command as root inside the dashboard container itself.
+ * Used as a fallback when file operations fail due to root-owned files/dirs.
+ * Callers must validate the path with validatePath() before invoking this.
+ */
+export async function execAsRootInDashboard(commandArgs: string[]): Promise<void> {
+    const containerName = process.env.DASHBOARD_CONTAINER_NAME || 'nanobot-dashboard';
+
+    if (!validateContainerName(containerName)) {
+        throw new Error('Invalid dashboard container name');
+    }
+
+    for (const arg of commandArgs) {
+        if (typeof arg !== 'string') {
+            throw new Error('Invalid command argument type');
+        }
+    }
+
+    return new Promise((resolve, reject) => {
+        execFile('docker', ['exec', '--user', 'root', containerName, ...commandArgs], (error, stdout, stderr) => {
+            if (error) {
+                reject(new Error(stderr || error.message));
+            } else {
+                resolve();
+            }
+        });
+    });
+}
+
+/**
  * Gets the logs of the nanobot container.
  */
 export async function getContainerLogs(lines: number = 1000): Promise<string> {

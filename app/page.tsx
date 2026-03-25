@@ -270,7 +270,8 @@ export default function Dashboard() {
                 }
                 showToast('Operation successful', 'success');
             } else {
-                showToast('Operation failed', 'error');
+                const data = await res.json().catch(() => ({}));
+                showToast(data.error || 'Operation failed', 'error');
             }
         } catch (e) {
             showToast('Operation error', 'error');
@@ -289,7 +290,8 @@ export default function Dashboard() {
             if (res.ok) {
                 showToast('File saved successfully', 'success');
             } else {
-                showToast('Failed to save file', 'error');
+                const data = await res.json().catch(() => ({}));
+                showToast(data.error || 'Failed to save file', 'error');
             }
         } catch (e) {
             showToast('Error saving file', 'error');

@@ -73,7 +73,19 @@ export async function POST(req: Request) {
         const filePath = validatePath(file, workspaceDir);
 
         await fs.mkdir(path.dirname(filePath), { recursive: true });
-        await fs.writeFile(filePath, content, 'utf8');
+        try {
+            await fs.writeFile(filePath, content, 'utf8');
+        } catch (err: any) {
+            if (err.code === 'EACCES' || err.code === 'EPERM') {
+                // File is root-owned and not writable; unlink it from the parent
+                // directory (which is nextjs-writable) and recreate with correct ownership.
+                console.log(`[Workspace] Permission fallback: unlinking and recreating ${filePath}`);
+                await fs.unlink(filePath);
+                await fs.writeFile(filePath, content, 'utf8');
+            } else {
+                throw err;
+            }
+        }
         return NextResponse.json({ success: true });
     } catch (error: any) {
         if (error.message === 'Path traversal attempt detected' || error.message === 'Invalid path parameter') {
