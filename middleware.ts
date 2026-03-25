@@ -9,7 +9,7 @@ export function middleware(request: NextRequest) {
     const { pathname } = request.nextUrl;
 
     // Public paths that do not require authentication
-    if (pathname.startsWith('/api/auth') || pathname === '/login' || pathname.startsWith('/_next') || pathname === '/favicon.ico') {
+    if (pathname.startsWith('/api/auth') || pathname === '/api/status' || pathname === '/login' || pathname.startsWith('/_next') || pathname === '/favicon.ico') {
         return NextResponse.next();
     }
 

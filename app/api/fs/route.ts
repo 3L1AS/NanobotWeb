@@ -3,6 +3,7 @@ import os from 'os';
 import path from 'path';
 import fs from 'fs/promises';
 import { validatePath } from '../../lib/security';
+import { execAsRootInDashboard } from '../../lib/docker';
 
 const getWorkspaceDir = () => path.join(os.homedir(), '.nanobot');
 
@@ -72,10 +73,20 @@ export async function POST(req: Request) {
         
         if (action === 'delete') {
             const stats = await fs.stat(fullPath);
-            if (stats.isDirectory()) {
-                await fs.rm(fullPath, { recursive: true, force: true });
-            } else {
-                await fs.unlink(fullPath);
+            try {
+                if (stats.isDirectory()) {
+                    await fs.rm(fullPath, { recursive: true, force: true });
+                } else {
+                    await fs.unlink(fullPath);
+                }
+            } catch (err: any) {
+                if (err.code === 'EACCES' || err.code === 'EPERM') {
+                    // Root-owned file/dir: fall back to root-level delete via docker exec on self
+                    console.log(`[FS] Permission fallback: deleting ${fullPath} as root`);
+                    await execAsRootInDashboard(['rm', '-rf', fullPath]);
+                } else {
+                    throw err;
+                }
             }
             return NextResponse.json({ success: true });
         }
