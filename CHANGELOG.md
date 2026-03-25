@@ -2,7 +2,20 @@
 
 All notable changes to the NanobotWeb dashboard will be documented in this file.
 
-## [Unreleased] / [Latest update] - March 2026
+## [Latest] - March 25, 2026
+
+### Fixed
+- **File Explorer — Save on root-owned files**: Saving a file that was created by the nanobot-gateway container (which runs as root) no longer fails silently. The dashboard now automatically removes the root-owned copy and recreates it under its own user, permanently fixing ownership for future saves too.
+- **File Explorer — Delete of root-owned directories**: Deleting folders created by the nanobot agent (e.g. `cron/`, `templates/`) no longer returns a permission error. The dashboard falls back to a root-level delete via `docker exec` on itself, using the already-mounted Docker socket.
+- **File Explorer — Error messages**: Failed save/delete operations now display the actual reason from the server in the toast notification instead of a generic "Operation failed" message.
+- **Health check endpoint**: `/api/status` is now a public route so Docker health checks no longer require authentication.
+
+### Security
+- Added `*.log` and `.claude/` to `.gitignore` to prevent build logs and Claude Code local settings (which may contain sensitive data) from being accidentally committed.
+
+---
+
+## [Unreleased] / [Previous] - March 2026
 
 ### Added
 - **Live Logs Interface**: Added a dedicated `Logs` tab in the sidebar which hooks directly into the Docker SDK (`docker logs`).
