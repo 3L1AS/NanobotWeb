@@ -113,6 +113,13 @@ If the File Explorer shows no files:
 2. Fix if needed: `sudo chown -R 1001:1001 ~/.nanobot && sudo chmod -R 775 ~/.nanobot`
 3. Restart container: `docker-compose restart`
 
+### File Explorer — Cannot Save or Delete Files
+Files and directories created by the nanobot-gateway container are owned by root. The dashboard handles this automatically:
+- **Save**: Transparently recreates root-owned files under the dashboard user — no manual permission fix needed.
+- **Delete**: Falls back to a root-level removal via the Docker socket if a standard delete is blocked.
+
+If you still see permission errors, ensure the Docker socket is correctly mounted in `docker-compose.yml` and the container is healthy (`docker ps | grep nanobot-dashboard`).
+
 ### Login Issues
 If login redirects back to login page:
 - Ensure you're using the correct password from docker-compose.yml
