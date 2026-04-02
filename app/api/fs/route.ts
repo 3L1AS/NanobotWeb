@@ -67,7 +67,17 @@ export async function POST(req: Request) {
         const fullPath = validatePath(targetPath, workspaceDir);
 
         if (action === 'create_dir') {
-            await fs.mkdir(fullPath, { recursive: true });
+            try {
+                await fs.mkdir(fullPath, { recursive: true });
+            } catch (err: any) {
+                if (err.code === 'EACCES' || err.code === 'EPERM') {
+                    console.log(`[FS] Permission fallback: creating dir as root ${fullPath}`);
+                    await execAsRootInDashboard(['mkdir', '-p', fullPath]);
+                    await execAsRootInDashboard(['chown', '1001:1001', fullPath]);
+                } else {
+                    throw err;
+                }
+            }
             return NextResponse.json({ success: true });
         }
         
