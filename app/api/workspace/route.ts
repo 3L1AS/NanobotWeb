@@ -3,6 +3,7 @@ import os from 'os';
 import path from 'path';
 import fs from 'fs/promises';
 import { validatePath } from '../../lib/security';
+import { execAsRootInDashboard } from '../../lib/docker';
 
 const getWorkspaceDir = () => path.join(os.homedir(), '.nanobot');
 
@@ -72,16 +73,35 @@ export async function POST(req: Request) {
         const workspaceDir = getWorkspaceDir();
         const filePath = validatePath(file, workspaceDir);
 
-        await fs.mkdir(path.dirname(filePath), { recursive: true });
+        try {
+            await fs.mkdir(path.dirname(filePath), { recursive: true });
+        } catch (mkdirErr: any) {
+            if (mkdirErr.code === 'EACCES' || mkdirErr.code === 'EPERM') {
+                // Parent dir is root-owned; create it as root and fix ownership
+                console.log(`[Workspace] Permission fallback: creating dir as root for ${filePath}`);
+                await execAsRootInDashboard(['mkdir', '-p', path.dirname(filePath)]);
+                await execAsRootInDashboard(['chown', '-R', '1001:1001', path.dirname(filePath)]);
+            } else {
+                throw mkdirErr;
+            }
+        }
         try {
             await fs.writeFile(filePath, content, 'utf8');
         } catch (err: any) {
             if (err.code === 'EACCES' || err.code === 'EPERM') {
-                // File is root-owned and not writable; unlink it from the parent
-                // directory (which is nextjs-writable) and recreate with correct ownership.
-                console.log(`[Workspace] Permission fallback: unlinking and recreating ${filePath}`);
-                await fs.unlink(filePath);
-                await fs.writeFile(filePath, content, 'utf8');
+                try {
+                    // File is root-owned but parent dir is nextjs-writable: unlink and recreate
+                    console.log(`[Workspace] Permission fallback: unlinking and recreating ${filePath}`);
+                    await fs.unlink(filePath);
+                    await fs.writeFile(filePath, content, 'utf8');
+                } catch {
+                    // Parent dir is also root-owned: write via temp file moved as root
+                    console.log(`[Workspace] Permission fallback: writing via root docker exec for ${filePath}`);
+                    const tmpPath = `/tmp/nanobot_tmp_${Date.now()}`;
+                    await fs.writeFile(tmpPath, content, 'utf8');
+                    await execAsRootInDashboard(['mv', tmpPath, filePath]);
+                    await execAsRootInDashboard(['chown', '1001:1001', filePath]);
+                }
             } else {
                 throw err;
             }
