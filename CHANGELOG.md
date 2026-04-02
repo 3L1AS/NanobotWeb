@@ -5,7 +5,7 @@ All notable changes to the NanobotWeb dashboard will be documented in this file.
 ## [Latest] - April 2, 2026
 
 ### Fixed
-- **File Explorer — Edit/create files in root-owned project directories**: The nanobot agent (running as root) creates project directories owned by root, which the dashboard (running as UID 1001) previously could not write into at all — not even to create new files or subdirectories. The workspace and fs API routes now fall back to `docker exec --user root` when the parent directory itself is root-owned: new files are written via a temp file moved into place as root, new subdirectories are created as root, and ownership is corrected to UID 1001 immediately after so subsequent edits work without fallbacks. Affected folders like `wikipedia/`, `rain-alert/`, `aphantasia-anendophasia-community/`, and `test-landing/` are now fully editable from the File Explorer.
+- **File Explorer — Edit/create files in root-owned project directories**: The nanobot agent (running as root) creates project directories owned by root, which the dashboard (running as UID 1001) previously could not write into at all — not even to create new files or subdirectories. The workspace and fs API routes now fall back to `docker exec --user root` when the parent directory itself is root-owned: new files are written via a temp file moved into place as root, new subdirectories are created as root, and ownership is corrected to UID 1001 immediately after so subsequent edits work without fallbacks. Any project directory created by the nanobot agent is now fully editable from the File Explorer.
 
 ---
 
