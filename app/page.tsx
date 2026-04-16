@@ -20,7 +20,7 @@ const formatSize = (bytes?: number) => {
 
 const formatDate = (iso?: string) => {
     if (!iso) return '—';
-    return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+    return new Date(iso).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 };
 type Config = any;
 
@@ -578,7 +578,6 @@ export default function Dashboard() {
                                             <div className="pointer-events-none absolute left-0 top-full mt-1 z-50 w-52 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                                                 <div className="bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 shadow-xl text-xs space-y-1">
                                                     <p className="font-medium text-white truncate">{file.name}</p>
-                                                    <p className="text-zinc-400">{file.type === 'directory' ? 'Folder' : 'File'}</p>
                                                     <div className="border-t border-white/5 pt-1 space-y-0.5 text-zinc-400">
                                                         <p>Size: <span className="text-zinc-200">{file.type === 'directory' ? '—' : formatSize(file.size)}</span></p>
                                                         <p>Created: <span className="text-zinc-200">{formatDate(file.created)}</span></p>
