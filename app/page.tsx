@@ -573,9 +573,9 @@ export default function Dashboard() {
                                 <div className="overflow-y-auto flex-1 p-2 space-y-0.5 custom-scrollbar">
                                     {files.length === 0 && <p className="text-xs text-zinc-600 p-2 text-center">Directory empty</p>}
                                     {files.map((file, i) => (
-                                        <div key={i} className={`group/item relative w-full flex items-center justify-between px-2 py-1.5 rounded-md text-sm transition ${activeFile === file.path ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'}`}>
+                                        <div key={i} className={`group relative w-full flex items-center justify-between px-2 py-1.5 rounded-md text-sm transition ${activeFile === file.path ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'}`}>
                                             {/* Custom tooltip */}
-                                            <div className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-2 z-50 w-52 opacity-0 group-hover/item:opacity-100 transition-opacity duration-150">
+                                            <div className="pointer-events-none absolute left-0 top-full mt-1 z-50 w-52 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
                                                 <div className="bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 shadow-xl text-xs space-y-1">
                                                     <p className="font-medium text-white truncate">{file.name}</p>
                                                     <p className="text-zinc-400">{file.type === 'directory' ? 'Folder' : 'File'}</p>
