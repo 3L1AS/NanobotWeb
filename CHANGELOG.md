@@ -2,6 +2,18 @@
 
 All notable changes to the NanobotWeb dashboard will be documented in this file.
 
+## [Latest] - April 16, 2026
+
+### Added
+- **File Explorer — File/folder tooltips**: Hovering over any item in the File Explorer now shows a styled tooltip with the item name, type (File / Folder), size (formatted as B / KB / MB), and created date. Size and creation date are fetched from the filesystem during directory listing via `fs.stat()` so no extra requests are made on hover.
+- **File Editor — Word wrap toggle**: A `Wrap` button has been added to the file editor toolbar. When active (highlighted in indigo) long lines break at the panel edge; when off (default) the editor scrolls horizontally, preserving the code-editor feel.
+
+### Changed
+- **Dashboard — Header removed**: The top header bar (including the `{tab} Space` H2) has been removed from the main content area to give all tabs more vertical space. Toast notifications are now displayed as a floating overlay in the top-right corner.
+- **API — `/api/fs` response enriched**: The `GET` handler now returns `size` (bytes, files only) and `created` (ISO date string) alongside the existing `name`, `type`, and `path` fields.
+
+---
+
 ## [Latest] - April 2, 2026
 
 ### Fixed

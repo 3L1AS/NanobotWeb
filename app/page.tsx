@@ -6,10 +6,22 @@ import {
     Activity, Settings, FolderOpen, Save, RefreshCw,
     Bot, Server, CornerDownLeft, Send, LogOut, Moon, Sun,
     FileText, Folder, Plus, Trash2, Cpu, CheckCircle2, MessageSquare, PlusCircle, XCircle,
-    Terminal, Filter, Download, Pause, Play, BarChart, FolderPlus, FilePlus, Copy, Edit2
+    Terminal, Filter, Download, Pause, Play, BarChart, FolderPlus, FilePlus, Copy, Edit2, WrapText
 } from 'lucide-react';
 
-type FsItem = { name: string; type: 'file' | 'directory'; path: string };
+type FsItem = { name: string; type: 'file' | 'directory'; path: string; size?: number; created?: string };
+
+const formatSize = (bytes?: number) => {
+    if (bytes === undefined) return '—';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+};
+
+const formatDate = (iso?: string) => {
+    if (!iso) return '—';
+    return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+};
 type Config = any;
 
 export default function Dashboard() {
@@ -38,6 +50,7 @@ export default function Dashboard() {
     const [logsSearch, setLogsSearch] = useState<string>('');
     const [logsLevel, setLogsLevel] = useState<'All' | 'Info' | 'Debug' | 'Warn' | 'Error'>('All');
 
+    const [wordWrap, setWordWrap] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
 
@@ -401,19 +414,16 @@ export default function Dashboard() {
 
             {/* Main Content Area */}
             <main className="flex-1 flex flex-col h-full relative">
-                {/* Top Header */}
-                <header className="h-16 flex items-center justify-between px-8 border-b border-white/5 flex-shrink-0">
-                    <h2 className="text-xl font-semibold capitalize bg-clip-text text-transparent bg-gradient-to-r from-white to-zinc-300">
-                        {activeTab} Space
-                    </h2>
-                    {toast && (
+                {/* Toast Notification */}
+                {toast && (
+                    <div className="absolute top-4 right-4 z-50">
                         <div className={`flex items-center gap-2 px-4 py-1.5 rounded-full border text-sm font-medium animate-in fade-in slide-in-from-top-2 ${toast.type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'
                             }`}>
                             {toast.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
                             {toast.msg}
                         </div>
-                    )}
-                </header>
+                    </div>
+                )}
 
                 {/* Dynamic Content Views */}
                 <div className="flex-1 overflow-hidden">
@@ -563,11 +573,22 @@ export default function Dashboard() {
                                 <div className="overflow-y-auto flex-1 p-2 space-y-0.5 custom-scrollbar">
                                     {files.length === 0 && <p className="text-xs text-zinc-600 p-2 text-center">Directory empty</p>}
                                     {files.map((file, i) => (
-                                        <div key={i} className={`group w-full flex items-center justify-between px-2 py-1.5 rounded-md text-sm transition ${activeFile === file.path ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'}`}>
+                                        <div key={i} className={`group/item relative w-full flex items-center justify-between px-2 py-1.5 rounded-md text-sm transition ${activeFile === file.path ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'}`}>
+                                            {/* Custom tooltip */}
+                                            <div className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-2 z-50 w-52 opacity-0 group-hover/item:opacity-100 transition-opacity duration-150">
+                                                <div className="bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 shadow-xl text-xs space-y-1">
+                                                    <p className="font-medium text-white truncate">{file.name}</p>
+                                                    <p className="text-zinc-400">{file.type === 'directory' ? 'Folder' : 'File'}</p>
+                                                    <div className="border-t border-white/5 pt-1 space-y-0.5 text-zinc-400">
+                                                        <p>Size: <span className="text-zinc-200">{file.type === 'directory' ? '—' : formatSize(file.size)}</span></p>
+                                                        <p>Created: <span className="text-zinc-200">{formatDate(file.created)}</span></p>
+                                                    </div>
+                                                </div>
+                                            </div>
                                             <button onClick={() => {
                                                 if (file.type === 'directory') fetchFiles(file.path);
                                                 else openFile(file.path);
-                                            }} className="flex items-center gap-2 flex-1 overflow-hidden text-left" title={file.name}>
+                                            }} className="flex items-center gap-2 flex-1 overflow-hidden text-left">
                                                 {file.type === 'directory' ? <Folder className="w-4 h-4 text-blue-400 shrink-0" /> : <FileText className="w-4 h-4 text-pink-400 shrink-0" />}
                                                 <span className="truncate">{file.name}</span>
                                             </button>
@@ -601,6 +622,11 @@ export default function Dashboard() {
                                                 <FileText className="w-4 h-4 shrink-0" /> {activeFile}
                                             </span>
                                             <div className="flex items-center gap-2 shrink-0">
+                                                {getFileType(activeFile) === 'text' && (
+                                                    <button onClick={() => setWordWrap(w => !w)} className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition shadow-sm border ${wordWrap ? 'bg-indigo-500/20 border-indigo-500/30 text-indigo-300' : 'bg-white/5 border-white/5 text-zinc-400 hover:text-zinc-200 hover:bg-white/10'}`} title="Toggle word wrap">
+                                                        <WrapText className="w-4 h-4" /> Wrap
+                                                    </button>
+                                                )}
                                                 <button onClick={() => window.open(`/api/workspace?file=${encodeURIComponent(activeFile)}&raw=true&download=true`, '_blank')} className="flex items-center gap-2 bg-white/5 hover:bg-white/10 text-zinc-300 px-3 py-1.5 rounded-md text-sm font-medium transition shadow-sm border border-white/5">
                                                     <Download className="w-4 h-4" /> Download
                                                 </button>
@@ -650,9 +676,9 @@ export default function Dashboard() {
                                                                 lineNumbersRef.current.scrollTop = e.currentTarget.scrollTop;
                                                             }
                                                         }}
-                                                        className="flex-1 w-full h-full bg-transparent pl-4 pr-6 py-6 text-sm outline-none font-mono text-zinc-300 focus:outline-none resize-none custom-scrollbar whitespace-pre overflow-auto leading-5"
+                                                        className={`flex-1 w-full h-full bg-transparent pl-4 pr-6 py-6 text-sm outline-none font-mono text-zinc-300 focus:outline-none resize-none custom-scrollbar overflow-auto leading-5 ${wordWrap ? 'whitespace-pre-wrap break-all' : 'whitespace-pre'}`}
                                                         spellCheck={false}
-                                                        wrap="off"
+                                                        wrap={wordWrap ? 'soft' : 'off'}
                                                     />
                                                 </div>
                                             )}

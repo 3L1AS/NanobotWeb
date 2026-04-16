@@ -11,6 +11,8 @@ export type FsItem = {
     name: string;
     type: 'file' | 'directory';
     path: string;
+    size?: number;
+    created?: string;
 }
 
 export async function GET(req: Request) {
@@ -24,11 +26,25 @@ export async function GET(req: Request) {
 
         const items = await fs.readdir(dirPath, { withFileTypes: true });
 
-        const result: FsItem[] = items.map(item => ({
-            name: item.name,
-            type: item.isDirectory() ? 'directory' : 'file',
-            // Store relative path from workspace root for consistency
-            path: path.relative(workspaceDir, path.join(dirPath, item.name)).replace(/\\/g, '/')
+        const result: FsItem[] = await Promise.all(items.map(async item => {
+            const fullItemPath = path.join(dirPath, item.name);
+            const isDir = item.isDirectory();
+            let size: number | undefined;
+            let created: string | undefined;
+            try {
+                const stat = await fs.stat(fullItemPath);
+                size = isDir ? undefined : stat.size;
+                // birthtime falls back to mtime on filesystems that don't track it
+                const createdDate = stat.birthtime.getFullYear() > 1970 ? stat.birthtime : stat.mtime;
+                created = createdDate.toISOString();
+            } catch { /* skip stats if inaccessible */ }
+            return {
+                name: item.name,
+                type: isDir ? 'directory' : 'file',
+                path: path.relative(workspaceDir, fullItemPath).replace(/\\/g, '/'),
+                size,
+                created,
+            };
         }));
 
         // Sort: directories first, then alphabetical
