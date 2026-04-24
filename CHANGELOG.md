@@ -2,7 +2,14 @@
 
 All notable changes to the NanobotWeb dashboard will be documented in this file.
 
-## [Latest] - April 16, 2026
+## [Latest] - April 24, 2026
+
+### Changed
+- **File Explorer — Action buttons moved into tooltip**: The Download, Copy, Rename, and Delete icons have been removed from the inline file row and placed at the top of the hover tooltip (above the filename, size, and created fields). The tooltip is now interactive — moving the mouse onto it keeps it visible so actions can be clicked. This frees up space in the file row for longer filenames to display without truncation.
+
+---
+
+## [Previous] - April 16, 2026
 
 ### Added
 - **File Explorer — File/folder tooltips**: Hovering over any item in the File Explorer now shows a styled tooltip with the item name, type (File / Folder), size (formatted as B / KB / MB), and created date. Size and creation date are fetched from the filesystem during directory listing via `fs.stat()` so no extra requests are made on hover.
