@@ -575,10 +575,26 @@ export default function Dashboard() {
                                     {files.map((file, i) => (
                                         <div key={i} className={`group relative w-full flex items-center justify-between px-2 py-1.5 rounded-md text-sm transition ${activeFile === file.path ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'}`}>
                                             {/* Custom tooltip */}
-                                            <div className="pointer-events-none absolute left-0 top-full mt-1 z-50 w-52 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                                            <div className="absolute left-0 top-full mt-1 z-50 w-52 opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none group-hover:pointer-events-auto">
                                                 <div className="bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 shadow-xl text-xs space-y-1">
+                                                    <div className="flex items-center gap-0.5 border-b border-white/5 pb-2">
+                                                        {file.type === 'file' && (
+                                                            <button onClick={(e) => { e.stopPropagation(); window.open(`/api/workspace?file=${encodeURIComponent(file.path)}&raw=true&download=true`, '_blank'); }} className="p-1 text-zinc-400 hover:text-white transition" title="Download">
+                                                                <Download className="w-3.5 h-3.5" />
+                                                            </button>
+                                                        )}
+                                                        <button onClick={(e) => { e.stopPropagation(); handleFsAction('copy', file); }} className="p-1 text-zinc-400 hover:text-white transition" title="Copy">
+                                                            <Copy className="w-3.5 h-3.5" />
+                                                        </button>
+                                                        <button onClick={(e) => { e.stopPropagation(); handleFsAction('rename', file); }} className="p-1 text-zinc-400 hover:text-white transition" title="Rename">
+                                                            <Edit2 className="w-3.5 h-3.5" />
+                                                        </button>
+                                                        <button onClick={(e) => { e.stopPropagation(); handleFsAction('delete', file); }} className="p-1 text-zinc-400 hover:text-red-400 transition" title="Delete">
+                                                            <Trash2 className="w-3.5 h-3.5" />
+                                                        </button>
+                                                    </div>
                                                     <p className="font-medium text-white truncate">{file.name}</p>
-                                                    <div className="border-t border-white/5 pt-1 space-y-0.5 text-zinc-400">
+                                                    <div className="space-y-0.5 text-zinc-400">
                                                         <p>Size: <span className="text-zinc-200">{file.type === 'directory' ? '—' : formatSize(file.size)}</span></p>
                                                         <p>Created: <span className="text-zinc-200">{formatDate(file.created)}</span></p>
                                                     </div>
@@ -591,22 +607,6 @@ export default function Dashboard() {
                                                 {file.type === 'directory' ? <Folder className="w-4 h-4 text-blue-400 shrink-0" /> : <FileText className="w-4 h-4 text-pink-400 shrink-0" />}
                                                 <span className="truncate">{file.name}</span>
                                             </button>
-                                            <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-2">
-                                                {file.type === 'file' && (
-                                                    <button onClick={(e) => { e.stopPropagation(); window.open(`/api/workspace?file=${encodeURIComponent(file.path)}&raw=true&download=true`, '_blank'); }} className="p-1 hover:text-white transition" title="Download">
-                                                        <Download className="w-3.5 h-3.5" />
-                                                    </button>
-                                                )}
-                                                <button onClick={(e) => { e.stopPropagation(); handleFsAction('copy', file); }} className="p-1 hover:text-white transition" title="Copy">
-                                                    <Copy className="w-3.5 h-3.5" />
-                                                </button>
-                                                <button onClick={(e) => { e.stopPropagation(); handleFsAction('rename', file); }} className="p-1 hover:text-white transition" title="Rename">
-                                                    <Edit2 className="w-3.5 h-3.5" />
-                                                </button>
-                                                <button onClick={(e) => { e.stopPropagation(); handleFsAction('delete', file); }} className="p-1 hover:text-red-400 transition" title="Delete">
-                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                </button>
-                                            </div>
                                         </div>
                                     ))}
                                 </div>
