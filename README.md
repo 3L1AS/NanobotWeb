@@ -75,10 +75,6 @@ See [SECURITY.md](SECURITY.md) for complete security documentation.
    - Visit `http://localhost:3000`
    - Login with your configured password
 
-### First Time Setup
-
-For detailed step-by-step instructions including troubleshooting, see [SETUP_COMPLETE.md](SETUP_COMPLETE.md).
-
 ### Production Deployment
 
 For secure production deployment with HTTPS and reverse proxy setup, see [DEPLOYMENT.md](DEPLOYMENT.md).
@@ -93,11 +89,9 @@ For secure production deployment with HTTPS and reverse proxy setup, see [DEPLOY
 
 ## 📚 Documentation
 
-- **[SETUP_COMPLETE.md](SETUP_COMPLETE.md)** - Complete setup guide with step-by-step instructions
 - **[SECURITY.md](SECURITY.md)** - Security features, policy, and best practices
 - **[DEPLOYMENT.md](DEPLOYMENT.md)** - Production deployment guide with HTTPS and reverse proxy
-- **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** - Common issues and diagnostic commands
-- **[TRAEFIK_SETUP.md](TRAEFIK_SETUP.md)** - Traefik reverse proxy integration guide
+- **[CHANGELOG.md](CHANGELOG.md)** - Full release history
 
 ## 🔧 Troubleshooting
 
@@ -125,8 +119,6 @@ If login redirects back to login page:
 - Ensure you're using the correct password from docker-compose.yml
 - Check logs: `docker logs nanobot-dashboard --tail 50`
 - Verify container is running: `docker ps | grep nanobot-dashboard`
-
-For more detailed troubleshooting, see [TROUBLESHOOTING.md](TROUBLESHOOTING.md).
 
 ## 🔐 Security
 
