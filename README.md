@@ -23,6 +23,22 @@ NanobotWeb runs in its own lightweight Docker container alongside your existing 
 
 See [SECURITY.md](SECURITY.md) for complete security documentation.
 
+## 📸 Screenshots
+
+| Overview | Logs |
+|----------|------|
+| ![Overview](screenshots/overview.png) | ![Logs](screenshots/logs.png) |
+
+| File Explorer | Chat Sessions |
+|---------------|---------------|
+| ![File Explorer](screenshots/file-explorer.png) | ![Chat Sessions](screenshots/chat.png) |
+
+| Settings |
+|----------|
+| ![Settings](screenshots/settings.png) |
+
+---
+
 ## 🚀 Quick Start
 
 ### Prerequisites
