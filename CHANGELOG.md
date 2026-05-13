@@ -2,7 +2,18 @@
 
 All notable changes to the NanobotWeb dashboard will be documented in this file.
 
-## [Latest] - April 24, 2026
+## [Latest] - May 13, 2026
+
+### Added
+- **File Explorer — Sort filter**: A sort dropdown has been added to the file tree toolbar alongside the New File / New Folder buttons. Files and folders can now be sorted by Name A→Z, Name Z→A, Newest, Oldest, Largest, or Smallest. Folders are always grouped above files regardless of the selected sort mode.
+- **File Explorer — Resizable panel divider**: The border between the file tree and the file editor is now a draggable resize handle. Click and drag it left or right to adjust how much space each panel takes. The file tree panel is constrained between 180 px and 600 px. The handle highlights in indigo on hover to make it easy to find.
+
+### Changed
+- **File Explorer — Inline action buttons**: The hover tooltip popup has been replaced with inline icon buttons that fade in on the right side of each file row on hover. Download, Copy, Rename, and Delete are now always reachable without having to chase a floating panel. File metadata (size and created date) is accessible via the native browser tooltip on the filename.
+
+---
+
+## [Previous] - April 24, 2026
 
 ### Changed
 - **File Explorer — Action buttons moved into tooltip**: The Download, Copy, Rename, and Delete icons have been removed from the inline file row and placed at the top of the hover tooltip (above the filename, size, and created fields). The tooltip is now interactive — moving the mouse onto it keeps it visible so actions can be clicked. This frees up space in the file row for longer filenames to display without truncation.

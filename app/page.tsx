@@ -6,7 +6,7 @@ import {
     Activity, Settings, FolderOpen, Save, RefreshCw,
     Bot, Server, CornerDownLeft, Send, LogOut, Moon, Sun,
     FileText, Folder, Plus, Trash2, Cpu, CheckCircle2, MessageSquare, PlusCircle, XCircle,
-    Terminal, Filter, Download, Pause, Play, BarChart, FolderPlus, FilePlus, Copy, Edit2, WrapText
+    Terminal, Filter, Download, Pause, Play, BarChart, FolderPlus, FilePlus, Copy, Edit2, WrapText, ArrowUpDown
 } from 'lucide-react';
 
 type FsItem = { name: string; type: 'file' | 'directory'; path: string; size?: number; created?: string };
@@ -50,6 +50,8 @@ export default function Dashboard() {
     const [logsSearch, setLogsSearch] = useState<string>('');
     const [logsLevel, setLogsLevel] = useState<'All' | 'Info' | 'Debug' | 'Warn' | 'Error'>('All');
 
+    const [sortMode, setSortMode] = useState<'name-asc' | 'name-desc' | 'date-desc' | 'date-asc' | 'size-desc' | 'size-asc'>('name-asc');
+    const [explorerWidth, setExplorerWidth] = useState(320);
     const [wordWrap, setWordWrap] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
     const [toast, setToast] = useState<{ msg: string, type: 'success' | 'error' } | null>(null);
@@ -360,6 +362,24 @@ export default function Dashboard() {
         }
     };
 
+    const handleExplorerResize = (e: React.MouseEvent) => {
+        e.preventDefault();
+        const containerLeft = (e.currentTarget as HTMLElement).parentElement?.getBoundingClientRect().left ?? 0;
+        const onMouseMove = (ev: MouseEvent) => {
+            setExplorerWidth(Math.max(180, Math.min(600, ev.clientX - containerLeft)));
+        };
+        const onMouseUp = () => {
+            document.body.style.cursor = '';
+            document.body.style.userSelect = '';
+            window.removeEventListener('mousemove', onMouseMove);
+            window.removeEventListener('mouseup', onMouseUp);
+        };
+        document.body.style.cursor = 'col-resize';
+        document.body.style.userSelect = 'none';
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+    };
+
     const SidebarItem = ({ icon: Icon, label, id }: any) => (
         <button
             onClick={() => setActiveTab(id)}
@@ -545,7 +565,7 @@ export default function Dashboard() {
                     {activeTab === 'explorer' && (
                         <div className="flex h-full animate-in fade-in">
                             {/* File Tree Panel */}
-                            <div className="w-80 border-r border-white/5 bg-black/20 flex flex-col shrink-0">
+                            <div className="bg-black/20 flex flex-col shrink-0" style={{ width: explorerWidth }}>
                                 <div className="p-3 border-b border-white/5 flex items-center justify-between text-xs font-mono text-zinc-400 bg-black/40 gap-2 shrink-0">
                                     <div className="flex items-center gap-2 overflow-hidden flex-1">
                                         <FolderOpen className="w-4 h-4 shrink-0" />
@@ -554,6 +574,21 @@ export default function Dashboard() {
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-1 shrink-0">
+                                        <div className="relative flex items-center mr-1">
+                                            <ArrowUpDown className="w-3 h-3 absolute left-1.5 text-zinc-500 pointer-events-none" />
+                                            <select
+                                                value={sortMode}
+                                                onChange={e => setSortMode(e.target.value as typeof sortMode)}
+                                                className="bg-black/30 border border-white/10 rounded pl-5 pr-1.5 py-0.5 text-xs text-zinc-400 hover:text-white hover:border-white/20 transition cursor-pointer appearance-none focus:outline-none"
+                                            >
+                                                <option value="name-asc">A → Z</option>
+                                                <option value="name-desc">Z → A</option>
+                                                <option value="date-desc">Newest</option>
+                                                <option value="date-asc">Oldest</option>
+                                                <option value="size-desc">Largest</option>
+                                                <option value="size-asc">Smallest</option>
+                                            </select>
+                                        </div>
                                         <button onClick={handleCreateFile} className="p-1 text-zinc-400 hover:text-white hover:bg-white/10 rounded transition" title="New File">
                                             <FilePlus className="w-4 h-4" />
                                         </button>
@@ -572,45 +607,53 @@ export default function Dashboard() {
                                 </div>
                                 <div className="overflow-y-auto flex-1 p-2 space-y-0.5 custom-scrollbar">
                                     {files.length === 0 && <p className="text-xs text-zinc-600 p-2 text-center">Directory empty</p>}
-                                    {files.map((file, i) => (
+                                    {[...files].sort((a, b) => {
+                                        if (a.type !== b.type) return a.type === 'directory' ? -1 : 1;
+                                        switch (sortMode) {
+                                            case 'name-asc': return a.name.localeCompare(b.name);
+                                            case 'name-desc': return b.name.localeCompare(a.name);
+                                            case 'date-desc': return new Date(b.created || 0).getTime() - new Date(a.created || 0).getTime();
+                                            case 'date-asc': return new Date(a.created || 0).getTime() - new Date(b.created || 0).getTime();
+                                            case 'size-desc': return (b.size || 0) - (a.size || 0);
+                                            case 'size-asc': return (a.size || 0) - (b.size || 0);
+                                            default: return 0;
+                                        }
+                                    }).map((file, i) => (
                                         <div key={i} className={`group relative w-full flex items-center justify-between px-2 py-1.5 rounded-md text-sm transition ${activeFile === file.path ? 'bg-white/10 text-white' : 'text-zinc-400 hover:text-zinc-200 hover:bg-white/5'}`}>
-                                            {/* Custom tooltip */}
-                                            <div className="absolute left-0 top-full mt-1 z-50 w-52 opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none group-hover:pointer-events-auto">
-                                                <div className="bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 shadow-xl text-xs space-y-1">
-                                                    <div className="flex items-center gap-0.5 border-b border-white/5 pb-2">
-                                                        {file.type === 'file' && (
-                                                            <button onClick={(e) => { e.stopPropagation(); window.open(`/api/workspace?file=${encodeURIComponent(file.path)}&raw=true&download=true`, '_blank'); }} className="p-1 text-zinc-400 hover:text-white transition" title="Download">
-                                                                <Download className="w-3.5 h-3.5" />
-                                                            </button>
-                                                        )}
-                                                        <button onClick={(e) => { e.stopPropagation(); handleFsAction('copy', file); }} className="p-1 text-zinc-400 hover:text-white transition" title="Copy">
-                                                            <Copy className="w-3.5 h-3.5" />
-                                                        </button>
-                                                        <button onClick={(e) => { e.stopPropagation(); handleFsAction('rename', file); }} className="p-1 text-zinc-400 hover:text-white transition" title="Rename">
-                                                            <Edit2 className="w-3.5 h-3.5" />
-                                                        </button>
-                                                        <button onClick={(e) => { e.stopPropagation(); handleFsAction('delete', file); }} className="p-1 text-zinc-400 hover:text-red-400 transition" title="Delete">
-                                                            <Trash2 className="w-3.5 h-3.5" />
-                                                        </button>
-                                                    </div>
-                                                    <p className="font-medium text-white truncate">{file.name}</p>
-                                                    <div className="space-y-0.5 text-zinc-400">
-                                                        <p>Size: <span className="text-zinc-200">{file.type === 'directory' ? '—' : formatSize(file.size)}</span></p>
-                                                        <p>Created: <span className="text-zinc-200">{formatDate(file.created)}</span></p>
-                                                    </div>
-                                                </div>
-                                            </div>
                                             <button onClick={() => {
                                                 if (file.type === 'directory') fetchFiles(file.path);
                                                 else openFile(file.path);
-                                            }} className="flex items-center gap-2 flex-1 overflow-hidden text-left">
+                                            }} className="flex items-center gap-2 flex-1 overflow-hidden text-left min-w-0"
+                                                title={file.type === 'file' ? `${file.name}\nSize: ${formatSize(file.size)}\nCreated: ${formatDate(file.created)}` : file.name}>
                                                 {file.type === 'directory' ? <Folder className="w-4 h-4 text-blue-400 shrink-0" /> : <FileText className="w-4 h-4 text-pink-400 shrink-0" />}
                                                 <span className="truncate">{file.name}</span>
                                             </button>
+                                            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-1">
+                                                {file.type === 'file' && (
+                                                    <button onClick={(e) => { e.stopPropagation(); window.open(`/api/workspace?file=${encodeURIComponent(file.path)}&raw=true&download=true`, '_blank'); }} className="p-1 text-zinc-500 hover:text-white transition rounded hover:bg-white/10" title="Download">
+                                                        <Download className="w-3.5 h-3.5" />
+                                                    </button>
+                                                )}
+                                                <button onClick={(e) => { e.stopPropagation(); handleFsAction('copy', file); }} className="p-1 text-zinc-500 hover:text-white transition rounded hover:bg-white/10" title="Copy">
+                                                    <Copy className="w-3.5 h-3.5" />
+                                                </button>
+                                                <button onClick={(e) => { e.stopPropagation(); handleFsAction('rename', file); }} className="p-1 text-zinc-500 hover:text-white transition rounded hover:bg-white/10" title="Rename">
+                                                    <Edit2 className="w-3.5 h-3.5" />
+                                                </button>
+                                                <button onClick={(e) => { e.stopPropagation(); handleFsAction('delete', file); }} className="p-1 text-zinc-500 hover:text-red-400 transition rounded hover:bg-white/10" title="Delete">
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
                             </div>
+
+                            {/* Drag Handle */}
+                            <div
+                                onMouseDown={handleExplorerResize}
+                                className="w-1 shrink-0 bg-white/5 hover:bg-indigo-500/40 active:bg-indigo-500/60 transition-colors cursor-col-resize"
+                            />
 
                             {/* File Editor Panel */}
                             <div className="flex-1 flex flex-col bg-black/40 backdrop-blur-sm relative overflow-hidden">
