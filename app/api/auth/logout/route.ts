@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { destroySession } from '../../../lib/auth';
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
     // Get the token from the cookie
     const token = req.cookies.get('nanobot-auth-token')?.value;
 

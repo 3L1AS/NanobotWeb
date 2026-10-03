@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
+import { requireSession } from '../../lib/auth';
 import { getContainerLogs } from '../../lib/docker';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
+    const unauthorized = requireSession(request);
+    if (unauthorized) return unauthorized;
+
     try {
         const { searchParams } = new URL(request.url);
         const limitStr = searchParams.get('limit');

@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import { NextResponse } from 'next/server';
 
 /**
  * In-memory session store for authentication tokens
@@ -130,4 +131,25 @@ export function validateRequestSession(request: Request): boolean {
 
     const token = authCookie.split('=')[1];
     return validateSession(token);
+}
+
+/**
+ * Guard for API route handlers. The middleware only checks the cookie format
+ * (Edge runtime cannot see the session store), so every protected handler must
+ * call this first and return its response when it is not null.
+ */
+export function requireSession(request: Request): NextResponse | null {
+    if (validateRequestSession(request)) {
+        return null;
+    }
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+}
+
+/**
+ * Constant-time password comparison (hashing first so lengths always match)
+ */
+export function passwordMatches(candidate: string, expected: string): boolean {
+    const a = crypto.createHash('sha256').update(candidate).digest();
+    const b = crypto.createHash('sha256').update(expected).digest();
+    return crypto.timingSafeEqual(a, b);
 }

@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server';
-import { createSession } from '../../../lib/auth';
+import { createSession, passwordMatches } from '../../../lib/auth';
 import { isRateLimited, clearRateLimit } from '../../../lib/security';
 
 export async function POST(req: Request) {
     try {
         const { password } = await req.json();
 
-        // Get client identifier for rate limiting (use IP or a fallback)
+        // Get client identifier for rate limiting. Use the LAST X-Forwarded-For entry:
+        // it is the one our reverse proxy (Traefik) appended; earlier entries are client-controlled.
         const forwarded = req.headers.get('x-forwarded-for');
-        const ip = forwarded ? forwarded.split(',')[0] : req.headers.get('x-real-ip') || 'unknown';
+        const ip = forwarded ? forwarded.split(',').pop()!.trim() : req.headers.get('x-real-ip') || 'unknown';
 
         // Check rate limiting (5 attempts per 15 minutes)
         if (isRateLimited(ip)) {
@@ -26,12 +27,16 @@ export async function POST(req: Request) {
 
         const systemPassword = process.env.DASHBOARD_PASSWORD || 'admin';
 
-        // Warn if using default password
+        // Refuse the default password in production; warn about it in development
         if (systemPassword === 'admin') {
+            if (process.env.NODE_ENV === 'production') {
+                console.error('[Security] Login disabled: DASHBOARD_PASSWORD is unset or "admin".');
+                return NextResponse.json({ error: 'Dashboard password is not configured' }, { status: 503 });
+            }
             console.warn('[Security] WARNING: Using default password "admin". Please change DASHBOARD_PASSWORD environment variable!');
         }
 
-        if (password === systemPassword) {
+        if (passwordMatches(password, systemPassword)) {
             // Generate and store a session token server-side
             const token = createSession();
 
@@ -54,7 +59,7 @@ export async function POST(req: Request) {
             });
 
             console.log(`[Auth] Successful login from IP: ${ip}`);
-            console.log(`[Auth] Cookie set - Token: ${token.substring(0, 16)}..., Secure: ${isSecure}, SameSite: lax`);
+            console.log(`[Auth] Cookie set - Secure: ${isSecure}, SameSite: lax`);
             return response;
         }
 

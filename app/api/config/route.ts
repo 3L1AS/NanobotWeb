@@ -1,11 +1,15 @@
 import { NextResponse } from 'next/server';
+import { requireSession } from '../../lib/auth';
 import os from 'os';
 import path from 'path';
 import fs from 'fs/promises';
 
 const getConfigPath = () => path.join(os.homedir(), '.nanobot', 'config.json');
 
-export async function GET() {
+export async function GET(req: Request) {
+  const unauthorized = requireSession(req);
+  if (unauthorized) return unauthorized;
+
   try {
     const configPath = getConfigPath();
     const data = await fs.readFile(configPath, 'utf8');
@@ -20,6 +24,9 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const unauthorized = requireSession(req);
+  if (unauthorized) return unauthorized;
+
   try {
     const body = await req.json();
 

@@ -1,7 +1,11 @@
 import { NextResponse } from 'next/server';
+import { requireSession } from '../../lib/auth';
 import { execInContainer, isContainerRunning } from '../../lib/docker';
 
 export async function POST(req: Request) {
+    const unauthorized = requireSession(req);
+    if (unauthorized) return unauthorized;
+
     try {
         const { message, sessionId = 'default' } = await req.json();
 

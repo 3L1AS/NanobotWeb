@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireSession } from '../../lib/auth';
 import os from 'os';
 import path from 'path';
 import fs from 'fs/promises';
@@ -16,6 +17,9 @@ export type FsItem = {
 }
 
 export async function GET(req: Request) {
+    const unauthorized = requireSession(req);
+    if (unauthorized) return unauthorized;
+
     const { searchParams } = new URL(req.url);
     const reqPath = searchParams.get('path') || '';
 
@@ -70,6 +74,9 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+    const unauthorized = requireSession(req);
+    if (unauthorized) return unauthorized;
+
     try {
         const payload = await req.json();
         const { action, path: targetPath, newPath, type } = payload;

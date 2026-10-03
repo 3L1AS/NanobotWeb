@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { requireSession } from '../../lib/auth';
 import os from 'os';
 import path from 'path';
 import fs from 'fs/promises';
@@ -18,6 +19,9 @@ const getContentType = (ext: string) => {
 };
 
 export async function GET(req: Request) {
+    const unauthorized = requireSession(req);
+    if (unauthorized) return unauthorized;
+
     const { searchParams } = new URL(req.url);
     const file = searchParams.get('file') || 'HEARTBEAT.md';
     const isRaw = searchParams.get('raw') === 'true';
@@ -57,6 +61,9 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+    const unauthorized = requireSession(req);
+    if (unauthorized) return unauthorized;
+
     try {
         const { file, content } = await req.json();
 
